@@ -32,7 +32,7 @@ public class KeycloakUserService {
         String adminPassword = "admin123";
         String adminUsername = "bookstore-admin";
 
-        String serverUrl = "http://nervous_neumann:8080";
+        String serverUrl = "http://bookstore-keycloak:8080";
         return KeycloakBuilder.builder()
                 .serverUrl(serverUrl)
                 .realm(realm)
