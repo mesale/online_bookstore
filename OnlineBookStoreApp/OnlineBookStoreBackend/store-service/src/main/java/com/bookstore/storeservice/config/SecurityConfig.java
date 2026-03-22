@@ -1,4 +1,4 @@
-package com.bookstore.userservice.config;
+package com.bookstore.storeservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +28,7 @@ public class SecurityConfig {
                 )
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers( "/api/users/register", "/actuator/health").permitAll()
+                        .requestMatchers( "/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(resourceServer ->
