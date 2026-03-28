@@ -22,9 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.rmi.server.UID;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +63,7 @@ public class EmployeeService {
 
         Response response = keycloak.realm(realm).users().create(keycloakUser);
 
+
         if (response.getStatus() !=201)
             throw new KeycloakException("Failed to create employee in Keycloak: "
                     + response.getStatus());
@@ -74,6 +73,18 @@ public class EmployeeService {
                 .replaceAll(".*/([^/]+)$", "$1");
 
         response.close();
+
+        UserRepresentation updatedEmployee = keycloak.realm(realm).users().get(employeeKeycloakId).toRepresentation();
+
+        Map<String, List<String>> attributes = updatedEmployee.getAttributes();
+        if (attributes == null) attributes = new HashMap<>();
+
+        attributes.put("branch_id", List.of(branch.getId().toString()));
+        attributes.put("store_id", List.of(storeOwner.getStore().getId().toString()));
+
+        updatedEmployee.setAttributes(attributes);
+
+        keycloak.realm(realm).users().get(employeeKeycloakId).update(updatedEmployee);
 
         RoleRepresentation employeeRole = keycloak.realm(realm)
                 .roles()

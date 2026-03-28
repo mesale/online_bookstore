@@ -39,7 +39,7 @@ public class BranchService {
                 .phone(request.phone())
                 .build();
 
-        return toBranchResponse(branch);
+        return toBranchResponse(branchRepository.save(branch));
 
     }
 

@@ -23,6 +23,20 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: bookstore-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - bookstore-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
@@ -132,7 +146,7 @@ services:
     build: ./book-service
     container_name: book-service
     ports:
-      - "8083:8083"
+      - "8084:8084"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://bookstore-postgres:5432/bookstore_db
       - SPRING_DATASOURCE_USERNAME=postgres
@@ -154,3 +168,4 @@ networks:
 volumes:
   postgres_data:
   keycloak_data:
+  minio_data:

@@ -12,6 +12,7 @@ import com.bookstore.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -67,6 +68,13 @@ public class StoreApplicationService {
     public StoreApplicationResponse approveApplication(UUID applicationId){
         StoreApplication application = applicationRepository
                 .findById(applicationId).orElseThrow(() -> new ResourceNotFoundException("Application not Found"));
+        String id = application.getUser().getKeycloakId();
+
+        UserRepresentation keUser = keycloak.realm(realm).users().get(id).toRepresentation();
+
+        if (keUser.getEmail() == null)
+            throw new RuntimeException("Email is lost");
+
         if (application.getStatus() != StoreApplication.Status.PENDING)
             throw new ConflictException("Application is not in pending state");
 
@@ -76,7 +84,7 @@ public class StoreApplicationService {
                 .toRepresentation();
         keycloak.realm(realm)
                 .users()
-                .get(application.getUser().getKeycloakId())
+                .get(id)
                 .roles()
                 .realmLevel()
                 .add(Collections.singletonList(storeAdminRole));

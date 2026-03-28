@@ -8,16 +8,15 @@ import com.bookstore.storeservice.exception.ResourceNotFoundException;
 import com.bookstore.storeservice.repository.StoreOwnerRepository;
 import com.bookstore.storeservice.repository.StoreRepository;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +50,7 @@ public class StoreService {
                     .roles().realmLevel()
                     .add(Collections.singletonList(storeAdmin));
 
+
         } catch(Exception ex){
             log.warn("Could not assign ROLE_STORE_ADMIN to keycloakId: {}. " +
                     "Role may already be assigned.", event.getOwnerKeycloakId());
@@ -82,8 +82,16 @@ public class StoreService {
                 .phone(event.getOwnerPhone())
                 .build();
 
-        storeOwnerRepository.save(storeOwner);
+        UserRepresentation updatedOwner = keycloak.realm(realm).users().get(event.getOwnerKeycloakId()).toRepresentation();
+        Map<String, List<String>> attributes = updatedOwner.getAttributes();
+        if (attributes == null) attributes = new HashMap<>();
 
+        attributes.put("store_id", List.of(savedStore.getId().toString()));
+        updatedOwner.setAttributes(attributes);
+
+        keycloak.realm(realm).users().get(storeOwner.getKeycloakId()).update(updatedOwner);
+
+        storeOwnerRepository.save(storeOwner);
         log.info("Successfully created store and store owner for applicationId: {}",
                 event.getApplicationId());
 
