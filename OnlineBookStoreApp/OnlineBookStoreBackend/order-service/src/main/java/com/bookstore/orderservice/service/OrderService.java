@@ -54,6 +54,7 @@ public class OrderService {
                 .status(Order.Status.PENDING)
                 .paymentStatus(Order.PaymentStatus.PENDING)
                 .shippingAddress(request.shippingAddress())
+                .deliveryPinUsed(false)
                 .build();
 
         Order savedOrder = orderRepository.save(order);
@@ -79,7 +80,7 @@ public class OrderService {
                 .shippingAddress(savedOrder.getShippingAddress())
                 .build());
 
-        return toOrderResponse(orderRepository.save(savedOrder));
+        return toOrderResponse(savedOrder);
 
     }
 

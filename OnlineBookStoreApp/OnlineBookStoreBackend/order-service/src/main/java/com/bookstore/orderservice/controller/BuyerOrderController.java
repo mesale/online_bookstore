@@ -3,6 +3,7 @@ package com.bookstore.orderservice.controller;
 import com.bookstore.orderservice.dto.ApiResponse;
 import com.bookstore.orderservice.dto.OrderDto.*;
 import com.bookstore.orderservice.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class BuyerOrderController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
             @AuthenticationPrincipal Jwt jwt,
-            CreateOrderRequest request
+            @Valid @RequestBody CreateOrderRequest request
     ){
 
       OrderResponse response = orderService.createOrder(jwt.getSubject(), request);

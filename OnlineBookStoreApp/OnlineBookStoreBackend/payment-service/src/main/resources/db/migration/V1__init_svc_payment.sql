@@ -5,7 +5,7 @@ SET search_path TO svc_payment;
 CREATE TABLE transactions (
                               id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                               order_id UUID NOT NULL,
-                              buyer_keycloak_id UUID NOT NULL,
+                              buyer_keycloak_id VARCHAR NOT NULL,
                               store_id UUID NOT NULL,
                               branch_id UUID NOT NULL,
                               amount DECIMAL(10,2) NOT NULL,

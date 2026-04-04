@@ -3,8 +3,8 @@ package com.bookstore.orderservice.controller;
 import com.bookstore.orderservice.dto.ApiResponse;
 import com.bookstore.orderservice.dto.OrderDto.*;
 import com.bookstore.orderservice.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
@@ -54,7 +55,7 @@ public class BranchOrderController {
     @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<OrderResponse>> confirmDelivery(
             @AuthenticationPrincipal Jwt jwt,
-            ConfirmDeliveryRequest request
+            @Valid @RequestBody ConfirmDeliveryRequest request
     ){
 
         UUID branchId = UUID.fromString(jwt.getClaim("branch_id"));

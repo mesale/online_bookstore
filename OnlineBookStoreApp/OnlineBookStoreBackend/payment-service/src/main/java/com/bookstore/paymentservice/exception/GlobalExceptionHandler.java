@@ -1,6 +1,6 @@
-package com.bookstore.orderservice.exception;
+package com.bookstore.paymentservice.exception;
 
-import com.bookstore.orderservice.dto.ApiResponse;
+import com.bookstore.paymentservice.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -33,6 +33,14 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePaymentException(
+            PaymentException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult()
@@ -50,6 +58,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("An unexpected error occurred " + ex.getMessage()));
+                .body(ApiResponse.error("An unexpected error occurred" + ex.getMessage()));
     }
 }

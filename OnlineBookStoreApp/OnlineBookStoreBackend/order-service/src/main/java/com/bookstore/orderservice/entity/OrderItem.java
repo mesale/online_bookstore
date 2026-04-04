@@ -1,10 +1,7 @@
 package com.bookstore.orderservice.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -12,7 +9,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "order_items", schema = "svc_order")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
