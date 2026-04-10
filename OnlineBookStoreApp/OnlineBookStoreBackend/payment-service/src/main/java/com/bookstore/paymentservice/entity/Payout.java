@@ -40,6 +40,9 @@ public class Payout {
     @Column(name = "stripe_transfer_id")
     private String stripeTransferId;
 
+    @Column(name = "stripe_account_id")
+    private String stripeAccountId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PayoutStatus status;

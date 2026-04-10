@@ -18,6 +18,7 @@ public class DeliveryConfirmedEvent {
     private UUID storeId;
     private UUID branchId;
     private String stripePaymentId;
+    private String stripeAccountId;
     private BigDecimal totalPrice;
     private BigDecimal commission;
     private BigDecimal amountToRelease;

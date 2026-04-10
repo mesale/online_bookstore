@@ -45,6 +45,9 @@ public class Store {
     @Column(name = "bank_account")
     private String bankAccount;
 
+    @Column(name = "stripe_account_id")
+    private String stripeAccountId;
+
     @Column(nullable = false)
     private String region;
 

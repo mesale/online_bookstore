@@ -7,5 +7,7 @@ import lombok.NoArgsConstructor;
 public class KafkaTopics {
 
     public static final String STORE_APPLICATION_APPROVED = "store-application-approved";
+    public static final String STORE_CREATED = "store-created";
+    public static final String STRIPE_ACCOUNT_CREATED = "stripe-account-created";
 
 }

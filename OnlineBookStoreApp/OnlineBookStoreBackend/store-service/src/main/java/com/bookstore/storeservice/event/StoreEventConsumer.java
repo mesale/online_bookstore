@@ -13,9 +13,7 @@ public class StoreEventConsumer {
 
     private final StoreService storeService;
 
-    @KafkaListener(
-            topics = KafkaTopics.STORE_APPLICATION_APPROVED,
-            groupId = "store-service"
+    @KafkaListener(topics = KafkaTopics.STORE_APPLICATION_APPROVED, groupId = "store-service"
     )
     public void handleStoreApplicationApproved(StoreApplicationApprovedEvent event){
         log.info("Received StoreApplicationApprovedEvent for applicationId: {}", event.getApplicationId());
@@ -26,6 +24,17 @@ public class StoreEventConsumer {
             log.error("Failed to Process StoreApplicationApprovedEvent for applicationId: {}", event.getApplicationId(), e);
         }
 
+    }
+
+    @KafkaListener(topics = KafkaTopics.STRIPE_ACCOUNT_CREATED, groupId = "store-service")
+    public void handleStripeAccountCreated(StripeAccountCreatedEvent event){
+        log.info("Received StripeAccountCreatedEvent for storeId: {}", event.getStoreId());
+
+        try {
+            storeService.handleStripeAccountCreated(event);
+        }catch (Exception e){
+            log.error("Failed to process StripeAccountCreatedEvent for storeId: {}", event.getStoreId(), e);
+        }
     }
 
 }

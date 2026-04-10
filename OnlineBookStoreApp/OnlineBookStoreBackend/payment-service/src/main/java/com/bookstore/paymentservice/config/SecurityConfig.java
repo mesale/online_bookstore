@@ -19,7 +19,7 @@ import java.util.Map;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Bean
+@Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
         http

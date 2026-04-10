@@ -11,8 +11,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
-@RequestMapping("/api/store")
+@RequestMapping("/api/stores")
 @RequiredArgsConstructor
 public class StoreController {
 
@@ -26,6 +28,16 @@ public class StoreController {
 
         return ResponseEntity.ok(ApiResponse.ok(response));
 
+    }
+
+    @GetMapping("/{storeId}/stripe-account")
+    @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('EMPLOYEE') or hasRole('USER')")
+    public ResponseEntity<ApiResponse<String>> getStripeAccountId(
+            @PathVariable UUID storeId
+    ){
+        String stripeAccountId = storeService.getStripeAccountId(storeId);
+
+        return ResponseEntity.ok(ApiResponse.ok(stripeAccountId));
     }
 
     @PutMapping("/me")

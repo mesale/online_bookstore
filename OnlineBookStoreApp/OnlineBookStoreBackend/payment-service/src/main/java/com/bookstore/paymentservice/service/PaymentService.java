@@ -3,16 +3,20 @@ package com.bookstore.paymentservice.service;
 import com.bookstore.paymentservice.dto.PaymentDto.*;
 import com.bookstore.paymentservice.entity.Payout;
 import com.bookstore.paymentservice.entity.Transaction;
-import com.bookstore.paymentservice.event.DeliveryConfirmedEvent;
-import com.bookstore.paymentservice.event.OrderCreatedEvent;
-import com.bookstore.paymentservice.event.PaymentCompletedEvent;
-import com.bookstore.paymentservice.event.PaymentEventPublisher;
+import com.bookstore.paymentservice.event.*;
 import com.bookstore.paymentservice.exception.PaymentException;
 import com.bookstore.paymentservice.exception.ResourceNotFoundException;
 import com.bookstore.paymentservice.repository.PayoutRepository;
 import com.bookstore.paymentservice.repository.TransactionRepository;
+import com.stripe.exception.StripeException;
+import com.stripe.model.Account;
+import com.stripe.model.AccountLink;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Transfer;
+import com.stripe.param.AccountCreateParams;
+import com.stripe.param.AccountLinkCreateParams;
 import com.stripe.param.PaymentIntentCreateParams;
+import com.stripe.param.TransferCreateParams;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +37,53 @@ public class PaymentService {
 
     private static final BigDecimal FREE_COMMISSION = new BigDecimal("0.5");
     private static final BigDecimal PREMIUM_COMMISSION = new BigDecimal("0.2");
+
+    public void handleStoreCreated  (StoreCreatedEvent event){
+
+        try{
+            AccountCreateParams params  = AccountCreateParams.builder()
+                    .setType(AccountCreateParams.Type.EXPRESS)
+                    .setCountry("US")
+                    .setEmail(event.getBusinessEmail())
+                    .setCapabilities(
+                            AccountCreateParams.Capabilities.builder()
+                                    .setTransfers(
+                                            AccountCreateParams.Capabilities.Transfers.builder()
+                                                    .setRequested(true)
+                                                    .build()).
+                                    build())
+                    .putMetadata("store_id", event.getStoreId().toString())
+                    .putMetadata("store_name", event.getStoreName())
+                    .build();
+
+            Account account = Account.create(params);
+
+            AccountLinkCreateParams linkParams = AccountLinkCreateParams.builder()
+                    .setAccount(account.getId())
+                    .setRefreshUrl("https://localhost:8086/api/store/payment/retry") // Where to go if the link expires
+                    .setReturnUrl("https://localhost:8086/api/store/payment/completed") // Where to go after they finish
+                    .setType(AccountLinkCreateParams.Type.ACCOUNT_ONBOARDING)
+                    .build();
+
+            AccountLink accountLink = AccountLink.create(linkParams);
+
+            String onboardingUrl = accountLink.getUrl();
+
+            log.info("Stripe connect account created for storeId: {}", event.getStoreId());
+            log.info("Send this to the user to finish setup: {}", onboardingUrl);
+
+            paymentEventPublisher.publishStripeAccountCreated(
+                    new StripeAccountCreatedEvent(
+                            event.getStoreId(),
+                            account.getId()
+                    )
+            );
+
+        }catch(StripeException e){
+            log.error("Failed to create stripe account for storeId: {}", event.getStoreId());
+        }
+
+    }
 
     @Transactional
     public void handleOrderCreated(OrderCreatedEvent event){
@@ -73,13 +124,33 @@ public class PaymentService {
         try{
                 log.info("Releasing {} to storeId: {} for orderId: {}", event.getAmountToRelease(), event.getStoreId(), event.getOrderId());
 
+                long amountInCents = event.getAmountToRelease()
+                        .multiply(new BigDecimal("100"))
+                        .longValue();
+
+            TransferCreateParams transferParams = TransferCreateParams.builder()
+                    .setAmount(amountInCents)
+                    .setCurrency("USD")
+                    .setDestination(event.getStripeAccountId())
+                    .putMetadata("order_id", event.getOrderId().toString())
+                    .putMetadata("store_id", event.getStoreId().toString())
+                    .build();
+
+            Transfer transfer = Transfer.create(transferParams);
+
+            log.info("Stripe transfer created: {} for orderId: {}",
+                    transfer.getId(), event.getOrderId());
+
                 transaction.setStatus(Transaction.TransactionStatus.RELEASED);
+                transaction.setStripeAccountId(event.getStripeAccountId());
                 transactionRepository.save(transaction);
 
                 Payout payout = Payout.builder()
                         .transaction(transaction)
                         .storeId(event.getStoreId())
                         .amount(event.getAmountToRelease())
+                        .stripeTransferId(transfer.getId())
+                        .stripeAccountId(event.getStripeAccountId())
                         .status(Payout.PayoutStatus.COMPLETED)
                         .build();
 
@@ -92,6 +163,7 @@ public class PaymentService {
                     .transaction(transaction)
                     .storeId(event.getStoreId())
                     .amount(event.getAmountToRelease())
+                    .stripeAccountId(event.getStripeAccountId())
                     .status(Payout.PayoutStatus.FAILED)
                     .build();
 
@@ -117,7 +189,7 @@ public class PaymentService {
 
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                     .setAmount(amountInCents)
-                    .setCurrency("ETB")
+                    .setCurrency("USD")
                     .setAutomaticPaymentMethods(
                             PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
                                     .setEnabled(true)

@@ -46,6 +46,16 @@ public class StorePaymentController {
 
     }
 
+    @GetMapping("/retry")
+    public ResponseEntity<ApiResponse<String>> refreshUrl(){
+        return ResponseEntity.ok(ApiResponse.ok("session expired"));
+    }
+
+    @GetMapping("/completed")
+    public ResponseEntity<ApiResponse<String>> returnUrl(){
+        return ResponseEntity.ok(ApiResponse.ok("Session completed"));
+    }
+
 
 
 }

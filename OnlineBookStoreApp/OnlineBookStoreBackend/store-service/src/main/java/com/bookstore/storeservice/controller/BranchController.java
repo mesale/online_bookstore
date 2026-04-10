@@ -3,6 +3,7 @@ package com.bookstore.storeservice.controller;
 import com.bookstore.storeservice.dto.ApiResponse;
 import com.bookstore.storeservice.dto.BranchDto.*;
 import com.bookstore.storeservice.service.BranchService;
+import com.bookstore.storeservice.service.StoreService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class BranchController {
 
     private final BranchService branchService;
+    private final StoreService storeService;
 
     @PostMapping
     @PreAuthorize("hasRole('STORE_ADMIN')")

@@ -17,6 +17,9 @@ public class OrderDto {
             @NotNull(message = "Store ID is required")
             UUID storeId,
 
+//            @NotBlank(message = "Stripe account ID is required")
+//            String stripeAccountId,
+
             @NotBlank(message = "Shipping address is required")
             String shippingAddress,
 

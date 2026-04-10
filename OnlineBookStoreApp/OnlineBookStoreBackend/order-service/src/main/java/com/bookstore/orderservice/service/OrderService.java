@@ -1,5 +1,6 @@
 package com.bookstore.orderservice.service;
 
+import com.bookstore.orderservice.client.StoreClient;
 import com.bookstore.orderservice.dto.OrderDto.*;
 import com.bookstore.orderservice.entity.Order;
 import com.bookstore.orderservice.entity.OrderItem;
@@ -12,8 +13,8 @@ import com.bookstore.orderservice.repository.OrderItemRepository;
 import com.bookstore.orderservice.repository.OrderRepository;
 import com.bookstore.orderservice.exception.ConflictException;
 import com.bookstore.orderservice.exception.ResourceNotFoundException;
+import jakarta.mail.Store;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +33,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderEventPublisher orderEventPublisher;
+    private final StoreClient storeClient;
 
     @Value("${order.delivery.pin.expiry-minutes}")
     private int pinExpiryMinutes;
@@ -46,10 +48,21 @@ public class OrderService {
                 .map(item -> item.price().multiply(BigDecimal.valueOf(item.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        String stripeAccountId;
+        try{
+            stripeAccountId = storeClient
+                    .getStripeAccountId(request.storeId())
+                    .getBody().data();
+        }catch (Exception e){
+            log.error("Failed to fetch stripeAccountId");
+            throw new ConflictException("Could not retrieve stripeAccountId" + e.getMessage());
+        }
+
         Order order = Order.builder()
                 .buyerKeycloakId(buyerKeycloakId)
                 .branchId(request.branchId())
                 .storeId(request.storeId())
+                .stripeAccountId(stripeAccountId)
                 .totalPrice(totalPrice)
                 .status(Order.Status.PENDING)
                 .paymentStatus(Order.PaymentStatus.PENDING)
@@ -145,6 +158,8 @@ public class OrderService {
         Order order = orderRepository.findByDeliveryPin(request.pin())
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid PIN"));
 
+
+
         if (!order.getBranchId().equals(branchId))
             throw new UnauthorizedException("This PIN does not belong to your branch");
         if (order.getDeliveryPinUsed())
@@ -162,11 +177,23 @@ public class OrderService {
 
         BigDecimal amountToRelease = order.getTotalPrice().subtract(commission);
 
+
+        String stripeAccountId;
+        try{
+            stripeAccountId = storeClient
+                    .getStripeAccountId(order.getStoreId())
+                    .getBody().data();
+        }catch (Exception e){
+            log.error("Failed to fetch stripeAccountId");
+            throw new ConflictException("Could not retrieve stripeAccountId" + e.getMessage());
+        }
+
         orderEventPublisher.publishDeliveryConfirmed(DeliveryConfirmedEvent.builder()
                 .orderId(order.getId())
                 .storeId(order.getStoreId())
                 .branchId(order.getBranchId())
                 .stripePaymentId(order.getStripePaymentId())
+                .stripeAccountId(stripeAccountId)
                 .totalPrice(order.getTotalPrice())
                 .commission(commission)
                 .amountToRelease(amountToRelease)

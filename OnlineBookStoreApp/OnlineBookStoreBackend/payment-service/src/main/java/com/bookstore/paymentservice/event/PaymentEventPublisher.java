@@ -25,4 +25,18 @@ public class PaymentEventPublisher {
 
     }
 
+    public void publishStripeAccountCreated(StripeAccountCreatedEvent event) {
+        kafkaTemplate.send(KafkaTopics.STRIPE_ACCOUNT_CREATED,
+                        event.getStoreId().toString(), event)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("Failed to publish StripeAccountCreatedEvent for storeId: {}",
+                                event.getStoreId(), ex);
+                    } else {
+                        log.info("Published StripeAccountCreatedEvent for storeId: {}",
+                                event.getStoreId());
+                    }
+                });
+    }
+
 }

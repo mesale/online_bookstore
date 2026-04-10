@@ -4,6 +4,9 @@ import com.bookstore.storeservice.dto.StoreDto.*;
 import com.bookstore.storeservice.entity.Store;
 import com.bookstore.storeservice.entity.StoreOwner;
 import com.bookstore.storeservice.event.StoreApplicationApprovedEvent;
+import com.bookstore.storeservice.event.StoreCreatedEvent;
+import com.bookstore.storeservice.event.StoreEventPublisher;
+import com.bookstore.storeservice.event.StripeAccountCreatedEvent;
 import com.bookstore.storeservice.exception.ResourceNotFoundException;
 import com.bookstore.storeservice.repository.StoreOwnerRepository;
 import com.bookstore.storeservice.repository.StoreRepository;
@@ -26,6 +29,7 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final StoreOwnerRepository storeOwnerRepository;
     private final Keycloak keycloak;
+    private final StoreEventPublisher storeEventPublisher;
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -94,6 +98,36 @@ public class StoreService {
         storeOwnerRepository.save(storeOwner);
         log.info("Successfully created store and store owner for applicationId: {}",
                 event.getApplicationId());
+
+        storeEventPublisher.publishStoreCreated(
+                new StoreCreatedEvent(
+                        savedStore.getId(),
+                        savedStore.getEmail(),
+                        savedStore.getStoreName()
+                )
+        );
+
+    }
+
+    @Transactional
+    public void handleStripeAccountCreated(StripeAccountCreatedEvent event){
+
+        Store storeWithStripe = storeRepository.findById(event.getStoreId())
+                .orElseThrow(() -> new ResourceNotFoundException("Store not found"));
+
+        storeWithStripe.setStripeAccountId(event.getStripeAccountId());
+        storeRepository.save(storeWithStripe);
+
+        log.info("Stripe account ID saved for storeId: {}", event.getStoreId());
+
+    }
+
+    public String getStripeAccountId(UUID storeId){
+
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Store not found"));
+
+        return store.getStripeAccountId();
 
     }
 

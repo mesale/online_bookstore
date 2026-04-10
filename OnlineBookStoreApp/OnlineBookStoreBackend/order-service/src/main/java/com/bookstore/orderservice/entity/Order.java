@@ -36,6 +36,9 @@ public class Order {
     @Column(name = "store_id", nullable = false)
     private UUID storeId;
 
+    @Column(name = "stripe_account_id")
+    private String stripeAccountId;
+
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 

@@ -41,6 +41,9 @@ public class Transaction {
     @Column(name = "branch_id", nullable = false)
     private UUID branchId;
 
+    @Column(name = "stripe_account_id")
+    private String stripeAccountId;
+
     @Column(nullable = false)
     private BigDecimal amount;
 

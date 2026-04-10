@@ -13,6 +13,18 @@ public class PaymentEventConsumer {
 
     private final PaymentService paymentService;
 
+    @KafkaListener(topics = KafkaTopics.STORE_CREATED, groupId = "payment-service")
+    public void handleStoreCreated(StoreCreatedEvent event){
+        log.info("Received StoreCreatedEvent for storeId: {}", event.getStoreId());
+
+        try {
+            paymentService.handleStoreCreated(event);
+        }catch (Exception e){
+            log.error("Failed to process StoreCreatedEvent for storeId: {}", event.getStoreId());
+        }
+
+    }
+
     @KafkaListener(topics = KafkaTopics.ORDER_CREATED, groupId = "payment-service")
     public void handleOrderCreated(OrderCreatedEvent event){
         log.info("Received OrderCreatedEvent for orderId: {}", event.getOrderId());
