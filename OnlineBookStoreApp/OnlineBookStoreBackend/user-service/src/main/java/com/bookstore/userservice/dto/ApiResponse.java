@@ -26,8 +26,8 @@ public record ApiResponse<T>(
         return ok("Success", data);
     }
 
-    public static ApiResponse<Void> error(String message) {
-        return ApiResponse.<Void>builder()
+    public static <T> ApiResponse<T> error(String message) {
+        return ApiResponse.<T>builder()
                 .success(false)
                 .message(message)
                 .timestamp(LocalDateTime.now())

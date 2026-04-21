@@ -25,4 +25,15 @@ public class StoreEventPublisher {
 
     }
 
+    public void publishCreateStoreOwner(CreateStoreOwnerEvent event){
+        kafkaTemplate.send(KafkaTopics.CREATE_STORE_OWNER,
+                event.getStoreId().toString(), event)
+                .whenComplete((result, ex) ->{
+                    if (ex != null)
+                        log.error("Failed to publish CreateStoreOwnerEvent for storeId: {}", event.getStoreId(), ex);
+                    else
+                        log.info("Published CreateStoreOwnerEvent for storeId: {}", event.getStoreId());
+                });
+    }
+
 }

@@ -30,7 +30,10 @@ public class BranchController {
             @AuthenticationPrincipal Jwt jwt
             , @Valid @RequestBody CreateBranchRequest request
     ){
-        BranchResponse response = branchService.CreateBranch(jwt.getSubject(), request);
+
+        UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
+
+        BranchResponse response = branchService.CreateBranch(storeId, request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -42,7 +45,9 @@ public class BranchController {
     @PreAuthorize("hasRole('STORE_ADMIN')")
     public ResponseEntity<ApiResponse<List<BranchResponse>>> getMyBranch(@AuthenticationPrincipal Jwt jwt){
 
-        List<BranchResponse> responses = branchService.getMyBranches(jwt.getSubject());
+        UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
+
+        List<BranchResponse> responses = branchService.getMyBranches(storeId);
 
         return ResponseEntity.ok(ApiResponse.ok(responses));
 
@@ -55,7 +60,22 @@ public class BranchController {
             @PathVariable UUID branchId
             ){
 
-        BranchResponse response = branchService.getBranch(jwt.getSubject(), branchId);
+        UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
+
+        BranchResponse response = branchService.getBranch(storeId, branchId);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
+
+    }
+
+    @GetMapping("/{branchId}/exists")
+    @PreAuthorize("hasRole('STORE_ADMIN')")
+    public ResponseEntity<ApiResponse<Boolean>> branchExists(
+            UUID storeId,
+            @PathVariable UUID branchId
+    ){
+
+        boolean response = branchService.branchExists(storeId, branchId);
 
         return ResponseEntity.ok(ApiResponse.ok(response));
 
@@ -69,7 +89,9 @@ public class BranchController {
             @Valid @RequestBody UpdateBranchRequest request
     ){
 
-        BranchResponse response = branchService.updateBranch(jwt.getSubject(), branchId, request);
+        UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
+
+        BranchResponse response = branchService.updateBranch(storeId, branchId, request);
 
         return ResponseEntity
                 .ok(ApiResponse.ok("Branch updated successfully", response));
@@ -83,7 +105,9 @@ public class BranchController {
             @PathVariable UUID branchId
     ){
 
-       branchService.deleteBranch(jwt.getSubject(), branchId);
+        UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
+
+       branchService.deleteBranch(storeId, branchId);
 
        return ResponseEntity.ok(ApiResponse.ok("Branch deleted successfully", null));
 

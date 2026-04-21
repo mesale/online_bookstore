@@ -25,8 +25,8 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "keycloak_id", nullable = false)
-    private String keycloakId;
+    @Column(name = "created_by", nullable = false)
+    private UUID createdBy;
 
     @Column(name = "branch_id", nullable = false)
     private UUID branchId;

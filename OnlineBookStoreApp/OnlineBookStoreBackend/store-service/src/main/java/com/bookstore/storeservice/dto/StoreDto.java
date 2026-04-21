@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public class StoreDto {
 
-    public record CreateStoreRequest(
+    public record CompleteStoreProfileRequest(
 
             @NotBlank(message = "Store name is required")
             String storeName,
@@ -28,14 +28,14 @@ public class StoreDto {
             @NotBlank(message = "Address is required")
             String address,
 
-            @NotBlank(message = "Email is required")
-            @Email(message = "Invalid email address")
-            String email,
-
-            String phone,
             String bankName,
             String bankAccount
     ){}
+
+    public record RejectStoreRequest(
+            @NotBlank(message = "Rejection reason is required")
+            String reason
+    ) {}
 
     public record StoreResponse(
             UUID id,

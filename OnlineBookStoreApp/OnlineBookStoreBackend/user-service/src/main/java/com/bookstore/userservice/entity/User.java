@@ -12,7 +12,7 @@ import java.util.UUID;
 @Table(name = "users", schema = "svc_user")
 @Data
 @Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor
 public class User {
 

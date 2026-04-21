@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class StoreEventPublisher {
+public class UserEventPublisher {
 
     private  final KafkaTemplate<String, StoreApplicationApprovedEvent> kafkaTemplate;
 

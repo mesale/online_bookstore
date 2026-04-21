@@ -2,11 +2,11 @@ package com.bookstore.storeservice.service;
 
 import com.bookstore.storeservice.dto.BranchDto.*;
 import com.bookstore.storeservice.entity.Branch;
-import com.bookstore.storeservice.entity.StoreOwner;
+import com.bookstore.storeservice.entity.Store;
 import com.bookstore.storeservice.exception.ConflictException;
 import com.bookstore.storeservice.exception.ResourceNotFoundException;
 import com.bookstore.storeservice.repository.BranchRepository;
-import com.bookstore.storeservice.repository.StoreOwnerRepository;
+import com.bookstore.storeservice.repository.StoreRepository;
 import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,17 +21,18 @@ import java.util.UUID;
 public class BranchService {
 
     private final BranchRepository branchRepository;
-    private final StoreOwnerRepository storeOwnerRepository;
+    private final StoreRepository storeRepository;
 
-    public BranchResponse CreateBranch(String keycloakId, CreateBranchRequest request){
+    public BranchResponse CreateBranch(UUID storeId, CreateBranchRequest request){
 
-        StoreOwner storeOwner = storeOwnerRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
-        if (branchRepository.existsByBranchNameAndStoreId(request.branchName(), storeOwner.getStore().getId()))
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Store not found"));
+
+        if (branchRepository.existsByBranchNameAndStoreId(request.branchName(), storeId))
             throw new ConflictException("Branch with this name already exists in your store");
 
         Branch branch = Branch.builder()
-                .store(storeOwner.getStore())
+                .store(store)
                 .branchName(request.branchName())
                 .region(request.region())
                 .city(request.city())
@@ -43,36 +44,31 @@ public class BranchService {
 
     }
 
-    public List<BranchResponse> getMyBranches(String keycloakId){
+    public List<BranchResponse> getMyBranches(UUID storeId){
 
-        StoreOwner storeOwner = storeOwnerRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new ResourceNotFoundException("Owner Not found"));
-
-        return branchRepository.findByStoreId(storeOwner.getStore().getId())
+        return branchRepository.findByStoreId(storeId)
                 .stream()
                 .map(this::toBranchResponse)
                 .toList();
 
     }
 
-    public BranchResponse getBranch(String keycloakId, UUID branchId){
+    public BranchResponse getBranch(UUID storeId, UUID branchId){
 
-        StoreOwner storeOwner = storeOwnerRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
-
-        Branch branch = branchRepository.findByIdAndStoreId(branchId, storeOwner.getStore().getId())
+        Branch branch = branchRepository.findByIdAndStoreId(branchId, storeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
 
         return toBranchResponse(branch);
 
     }
 
-    public BranchResponse updateBranch(String keycloakId, UUID branchId, UpdateBranchRequest request){
+    public boolean branchExists(UUID branchId, UUID storeId){
+        return branchRepository.existsByIdAndStoreId(branchId, storeId);
+    }
 
-        StoreOwner storeOwner = storeOwnerRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
+    public BranchResponse updateBranch(UUID storeId, UUID branchId, UpdateBranchRequest request){
 
-        Branch branch = branchRepository.findByIdAndStoreId(branchId, storeOwner.getStore().getId())
+        Branch branch = branchRepository.findByIdAndStoreId(storeId, branchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
 
         branch.setBranchName(request.branchName());
@@ -85,12 +81,9 @@ public class BranchService {
 
     }
 
-    public void deleteBranch(String keycloakId, UUID branchId){
+    public void deleteBranch(UUID storeId, UUID branchId){
 
-        StoreOwner storeOwner = storeOwnerRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new NotFoundException("Owner not found"));
-
-        Branch branch = branchRepository.findByIdAndStoreId(branchId, storeOwner.getStore().getId())
+        Branch branch = branchRepository.findByIdAndStoreId(branchId, storeId)
                 .orElseThrow(() -> new NotFoundException("Branch not found"));
 
         branchRepository.delete(branch);

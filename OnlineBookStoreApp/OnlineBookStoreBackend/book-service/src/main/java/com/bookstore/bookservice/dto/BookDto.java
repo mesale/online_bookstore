@@ -56,7 +56,7 @@ public class BookDto {
 
     public record BookResponse(
             UUID id,
-            String keycloakId,
+            UUID createdBy,
             UUID branchId,
             UUID storeId,
             String title,

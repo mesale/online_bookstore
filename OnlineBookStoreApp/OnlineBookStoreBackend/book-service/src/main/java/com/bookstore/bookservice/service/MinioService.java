@@ -40,6 +40,7 @@ public class MinioService {
 
                 log.info("Created bucket: {}", bucketName);
 
+
             }
 
             minioClient.putObject(

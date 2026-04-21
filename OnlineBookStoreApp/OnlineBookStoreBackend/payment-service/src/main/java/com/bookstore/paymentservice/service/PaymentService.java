@@ -34,6 +34,7 @@ public class PaymentService {
     private final TransactionRepository transactionRepository;
     private final PayoutRepository payoutRepository;
     private final PaymentEventPublisher paymentEventPublisher;
+    private final EmailService emailService;
 
     private static final BigDecimal FREE_COMMISSION = new BigDecimal("0.5");
     private static final BigDecimal PREMIUM_COMMISSION = new BigDecimal("0.2");
@@ -60,8 +61,8 @@ public class PaymentService {
 
             AccountLinkCreateParams linkParams = AccountLinkCreateParams.builder()
                     .setAccount(account.getId())
-                    .setRefreshUrl("https://localhost:8086/api/store/payment/retry") // Where to go if the link expires
-                    .setReturnUrl("https://localhost:8086/api/store/payment/completed") // Where to go after they finish
+                    .setRefreshUrl("https://localhost:3000/onbording/retry") // Where to go if the link expires
+                    .setReturnUrl("https://localhost:3000/onbording/completed") // Where to go after they finish
                     .setType(AccountLinkCreateParams.Type.ACCOUNT_ONBOARDING)
                     .build();
 
@@ -71,6 +72,7 @@ public class PaymentService {
 
             log.info("Stripe connect account created for storeId: {}", event.getStoreId());
             log.info("Send this to the user to finish setup: {}", onboardingUrl);
+            emailService.sendStripeOnboardingEmail(event.getBusinessEmail(), event.getStoreName(), onboardingUrl);
 
             paymentEventPublisher.publishStripeAccountCreated(
                     new StripeAccountCreatedEvent(

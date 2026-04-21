@@ -16,10 +16,11 @@ CREATE TABLE stores (
                         address                 TEXT NOT NULL,
                         email                   VARCHAR(255) NOT NULL UNIQUE,
                         phone                   VARCHAR(20),
+                        stripe_account_id       VARCHAR(255),
                         plan                    VARCHAR(10) NOT NULL DEFAULT 'FREE'
                             CHECK (plan IN ('FREE', 'PREMIUM')),
                         verification_status     VARCHAR(10) NOT NULL DEFAULT 'PENDING'
-                            CHECK (verification_status IN ('PENDING', 'APPROVED', 'REJECTED')),
+                            CHECK (verification_status IN ('PENDING', 'AWAITING_DOCS', 'DOCS_SUBMITTED','APPROVED', 'REJECTED')),
                         rejection_reason        TEXT,
                         created_at              TIMESTAMP NOT NULL DEFAULT now(),
                         updated_at              TIMESTAMP NOT NULL DEFAULT now()
@@ -28,19 +29,6 @@ CREATE TABLE stores (
 CREATE INDEX idx_stores_verification_status ON stores(verification_status);
 CREATE INDEX idx_stores_email ON stores(email);
 
-CREATE TABLE store_owners (
-                              id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                              keycloak_id     VARCHAR(255) NOT NULL UNIQUE,
-                              store_id        UUID NOT NULL REFERENCES stores(id),
-                              name            VARCHAR(255) NOT NULL,
-                              email           VARCHAR(255) NOT NULL UNIQUE,
-                              phone           VARCHAR(20),
-                              created_at      TIMESTAMP NOT NULL DEFAULT now(),
-                              updated_at      TIMESTAMP NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_store_owners_keycloak_id ON store_owners(keycloak_id);
-CREATE INDEX idx_store_owners_store_id ON store_owners(store_id);
 
 CREATE TABLE branches (
                           id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,19 +44,25 @@ CREATE TABLE branches (
 
 CREATE INDEX idx_branches_store_id ON branches(store_id);
 
-CREATE TABLE employees (
+CREATE TABLE documents (
                            id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                           keycloak_id     VARCHAR(255) NOT NULL UNIQUE,
-                           store_id        UUID NOT NULL REFERENCES stores(id),
-                           branch_id       UUID NOT NULL REFERENCES branches(id),
-                           name            VARCHAR(255) NOT NULL,
-                           email           VARCHAR(255) NOT NULL UNIQUE,
-                           role            VARCHAR(10) NOT NULL
-                               CHECK (role IN ('MANAGER', 'STAFF')),
-                           created_at      TIMESTAMP NOT NULL DEFAULT now(),
-                           updated_at      TIMESTAMP NOT NULL DEFAULT now()
-);
 
-CREATE INDEX idx_employees_keycloak_id ON employees(keycloak_id);
-CREATE INDEX idx_employees_branch_id ON employees(branch_id);
-CREATE INDEX idx_employees_store_id ON employees(store_id);
+                           store_id        UUID REFERENCES stores(id) ON DELETE CASCADE,
+                           branch_id       UUID REFERENCES branches(id) ON DELETE CASCADE,
+                           document_type   VARCHAR(50) NOT NULL
+                               CHECK (document_type IN (
+                                                        'BUSINESS_LICENSE',
+                                                        'OWNER_ID',
+                                                        'OTHER'
+                                   )),
+                           file_name       VARCHAR(255) NOT NULL,
+                           content_type    VARCHAR(100),
+                           file_size       BIGINT,
+                           object_key      VARCHAR(500) NOT NULL,
+                           bucket_name     VARCHAR(255) NOT NULL,
+                           uploaded_by     UUID,
+                           created_at      TIMESTAMP NOT NULL DEFAULT now(),
+
+                           CONSTRAINT chk_document_owner
+                               CHECK (store_id IS NOT NULL OR branch_id IS NOT NULL)
+);

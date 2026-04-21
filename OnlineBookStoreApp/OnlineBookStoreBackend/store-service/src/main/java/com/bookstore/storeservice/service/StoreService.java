@@ -2,22 +2,16 @@ package com.bookstore.storeservice.service;
 
 import com.bookstore.storeservice.dto.StoreDto.*;
 import com.bookstore.storeservice.entity.Store;
-import com.bookstore.storeservice.entity.StoreOwner;
-import com.bookstore.storeservice.event.StoreApplicationApprovedEvent;
-import com.bookstore.storeservice.event.StoreCreatedEvent;
-import com.bookstore.storeservice.event.StoreEventPublisher;
-import com.bookstore.storeservice.event.StripeAccountCreatedEvent;
+import com.bookstore.storeservice.event.*;
+import com.bookstore.storeservice.exception.ConflictException;
 import com.bookstore.storeservice.exception.ResourceNotFoundException;
-import com.bookstore.storeservice.repository.StoreOwnerRepository;
 import com.bookstore.storeservice.repository.StoreRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.representations.idm.RoleRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -27,9 +21,10 @@ import java.util.*;
 public class StoreService {
 
     private final StoreRepository storeRepository;
-    private final StoreOwnerRepository storeOwnerRepository;
-    private final Keycloak keycloak;
+//    private final StoreOwnerRepository storeOwnerRepository;
     private final StoreEventPublisher storeEventPublisher;
+    private final MinioService minioService;
+    private final EmailService emailService;
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -37,27 +32,9 @@ public class StoreService {
     @Transactional
     public void createStoreFormApprovedApplication(StoreApplicationApprovedEvent event){
 
-        if (storeOwnerRepository.existsByKeycloakId(event.getOwnerKeycloakId())){
-            log.warn("Store owner already exists for keycloakId: {}. Skipping.", event.getOwnerKeycloakId());
+        if (storeRepository.existsByEmail(event.getBusinessEmail())) {
+            log.warn("Store already exists for email: {}", event.getBusinessEmail());
             return;
-        }
-
-        try {
-
-            RoleRepresentation storeAdmin = keycloak.realm(realm)
-                    .roles()
-                    .get("ROLE_STORE_ADMIN")
-                    .toRepresentation();
-
-            keycloak.realm(realm).users()
-                    .get(event.getOwnerKeycloakId())
-                    .roles().realmLevel()
-                    .add(Collections.singletonList(storeAdmin));
-
-
-        } catch(Exception ex){
-            log.warn("Could not assign ROLE_STORE_ADMIN to keycloakId: {}. " +
-                    "Role may already be assigned.", event.getOwnerKeycloakId());
         }
 
         Store store = Store.builder()
@@ -73,31 +50,25 @@ public class StoreService {
                 .bankName(event.getBankName())
                 .bankAccount(event.getBankAccount())
                 .plan(Store.Plan.FREE)
-                .verificationStatus(Store.VerificationStatus.APPROVED)
+                .verificationStatus(Store.VerificationStatus.AWAITING_DOCS)
                 .build();
 
         Store savedStore = storeRepository.save(store);
 
-        StoreOwner storeOwner = StoreOwner.builder()
-                .keycloakId(event.getOwnerKeycloakId())
-                .store(savedStore)
-                .name(event.getOwnerName())
-                .email(event.getOwnerEmail())
-                .phone(event.getOwnerPhone())
-                .build();
+        storeEventPublisher.publishCreateStoreOwner(
+                new CreateStoreOwnerEvent(
+                        savedStore.getId(),
+                        event.getOwnerKeycloakId()
 
-        UserRepresentation updatedOwner = keycloak.realm(realm).users().get(event.getOwnerKeycloakId()).toRepresentation();
-        Map<String, List<String>> attributes = updatedOwner.getAttributes();
-        if (attributes == null) attributes = new HashMap<>();
+                )
+        );
 
-        attributes.put("store_id", List.of(savedStore.getId().toString()));
-        updatedOwner.setAttributes(attributes);
+        log.info("Published CreateStoreOwnerEvent for storeId: {}", savedStore.getId());
 
-        keycloak.realm(realm).users().get(storeOwner.getKeycloakId()).update(updatedOwner);
+        emailService.sendCompleteProfileEmail(savedStore.getEmail(), savedStore.getStoreName());
 
-        storeOwnerRepository.save(storeOwner);
-        log.info("Successfully created store and store owner for applicationId: {}",
-                event.getApplicationId());
+        log.info("Successfully created store and store owner for applicationId: {} and email sent to: {}",
+                event.getApplicationId(), savedStore.getEmail());
 
         storeEventPublisher.publishStoreCreated(
                 new StoreCreatedEvent(
@@ -106,6 +77,43 @@ public class StoreService {
                         savedStore.getStoreName()
                 )
         );
+
+    }
+
+    @Transactional
+    public StoreResponse completeProfile(UUID storeId, CompleteStoreProfileRequest request, MultipartFile ownerIdFile, MultipartFile businessLicenseFile){
+
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Store not found"));
+
+        if (storeRepository.existsByBusinessRegNumber(request.businessRegNumber()))
+            throw new ConflictException("Business Reg number already in use");
+
+        if (storeRepository.existsByTin(request.tin()))
+            throw new ConflictException("TIN already in use");
+
+        if (store.getVerificationStatus() != Store.VerificationStatus.AWAITING_DOCS)
+            throw new ConflictException("Store is not awaiting documents");
+
+        log.info("Owner file name: {}", ownerIdFile.getOriginalFilename());
+        log.info("License file name: {}", businessLicenseFile.getOriginalFilename());
+
+        String ownerIdUrl = minioService.uploadFile(ownerIdFile, "owner-id");
+        String licenseUrl = minioService.uploadFile(businessLicenseFile, "business-license");
+
+        store.setStoreName(request.storeName());
+        store.setBusinessRegNumber(request.businessRegNumber());
+        store.setTin(request.tin());
+        store.setRegion(request.region());
+        store.setCity(request.city());
+        store.setAddress(request.address());
+        store.setBankName(request.bankName());
+        store.setBankAccount(request.bankAccount());
+        store.setOwnerIdUrl(ownerIdUrl);
+        store.setBusinessLicenseUrl(licenseUrl);
+        store.setVerificationStatus(Store.VerificationStatus.DOCS_SUBMITTED);
+
+        return toStoreResponse(storeRepository.save(store));
 
     }
 
@@ -140,21 +148,21 @@ public class StoreService {
 
     }
 
-    public StoreResponse getMyStore(String keycloakId){
+    public StoreResponse getMyStore(UUID storeId){
 
-        StoreOwner storeOwner = storeOwnerRepository
-                .findByKeycloakId(keycloakId).orElseThrow(()-> new ResourceNotFoundException("Store Not Found"));
 
-        return toStoreResponse(storeOwner.getStore());
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Store not found"));
+
+        return toStoreResponse(store);
 
     }
 
-    public StoreResponse updateStore(String keycloakId, UpdateStoreRequest request){
+    public StoreResponse updateStore(UUID storeId, UpdateStoreRequest request){
 
-        StoreOwner storeOwner = storeOwnerRepository
-                .findByKeycloakId(keycloakId).orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
 
-        Store store = storeOwner.getStore();
+        Store store = storeRepository.findById(storeId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Store not found"));
         store.setStoreName(request.storeName());
         store.setRegion(request.region());
         store.setCity(request.city());

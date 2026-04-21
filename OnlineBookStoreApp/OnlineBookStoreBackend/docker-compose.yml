@@ -159,6 +159,50 @@ services:
       discovery-service:
         condition: service_started
 
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://bookstore-postgres:5432/bookstore_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookstore-kafka:29092
+
+    networks:
+      - bookstore-network
+
+    depends_on:
+      bookstore-postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://bookstore-postgres:5432/bookstore_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookstore-kafka:29092
+    networks:
+      - bookstore-network
+
+    depends_on:
+      bookstore-postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
 
 networks:
   bookstore-network:

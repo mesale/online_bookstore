@@ -17,4 +17,6 @@ public interface BranchRepository extends JpaRepository<Branch, UUID> {
 
     boolean existsByBranchNameAndStoreId(String name, UUID storeId);
 
+    boolean existsByIdAndStoreId(UUID branchId, UUID storeId);
+
 }

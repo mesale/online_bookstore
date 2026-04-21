@@ -2,12 +2,14 @@ package com.bookstore.userservice.service;
 
 import com.bookstore.userservice.dto.StoreApplicationDto.*;
 import com.bookstore.userservice.entity.StoreApplication;
+import com.bookstore.userservice.entity.StoreApplicationToken;
 import com.bookstore.userservice.entity.User;
 import com.bookstore.userservice.event.StoreApplicationApprovedEvent;
-import com.bookstore.userservice.event.StoreEventPublisher;
+import com.bookstore.userservice.event.UserEventPublisher;
 import com.bookstore.userservice.exception.ConflictException;
 import com.bookstore.userservice.exception.ResourceNotFoundException;
 import com.bookstore.userservice.repository.StoreApplicationRepository;
+import com.bookstore.userservice.repository.StoreApplicationTokenRepository;
 import com.bookstore.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.admin.client.Keycloak;
@@ -25,23 +27,78 @@ import java.util.UUID;
 public class StoreApplicationService {
 
     private final StoreApplicationRepository applicationRepository;
+    private final StoreApplicationTokenRepository tokenRepository;
     private final UserRepository userRepository;
-    private final StoreEventPublisher storeEventPublisher;
+    private final UserEventPublisher userEventPublisher;
     private final Keycloak keycloak;
+    private final EmailService emailService;
 
     @Value("${keycloak.realm}")
     private String realm;
 
+    public void initiateApplication(String keycloakId, String businessEmail){
+
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException("user not found"));
+
+        UUID token = UUID.randomUUID();
+
+        StoreApplicationToken appToken = StoreApplicationToken.builder()
+                .user(user)
+                .email(businessEmail)
+                .token(token)
+                .expiresAt(LocalDateTime.now().plusHours(48))
+                .used(false)
+                .build();
+
+        tokenRepository.save(appToken);
+
+        emailService.sendStoreApplicationEmail(businessEmail, user.getName(), token.toString());
+
+    }
+
+    public TokenValidationResponse validateToken(String token){
+        UUID tokenUUID;
+        try {
+            tokenUUID = UUID.fromString(token);
+        } catch (IllegalArgumentException e) {
+            return new TokenValidationResponse(false, "Invalid token format", null);
+        }
+
+        return tokenRepository.findByTokenAndUsedFalse(tokenUUID)
+                .map(t -> {
+                    if (t.getExpiresAt().isBefore(LocalDateTime.now())) {
+                        return new TokenValidationResponse(false, "Token has expired", null);
+                    }
+                    return new TokenValidationResponse(true, "Token is valid", t.getEmail());
+                })
+                .orElse(new TokenValidationResponse(false, "Token not found or already used", null));
+    }
+
+
     public StoreApplicationResponse submitApplication(String keycloakId, SubmitApplicationRequest request){
-        User user = userRepository.findByKeycloakId(keycloakId).orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
 
         if(applicationRepository.existsByUserIdAndStatus(user.getId(), StoreApplication.Status.PENDING))
             throw new ConflictException("You already have a pending request");
+
+        StoreApplicationToken appToken = tokenRepository
+                .findByTokenAndUsedFalse(request.token())
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired token"));
+
+        if (appToken.getExpiresAt().isBefore(LocalDateTime.now()))
+            throw new ConflictException("Token has expired");
+
+        appToken.setUsed(true);
+        tokenRepository.save(appToken);
+
         StoreApplication storeApplication =StoreApplication.builder()
                 .user(user)
                 .businessEmail(request.businessEmail())
                 .status(StoreApplication.Status.PENDING)
                 .build();
+
 
         return toApplicationResponse(applicationRepository.save(storeApplication));
     }
@@ -103,7 +160,7 @@ public class StoreApplicationService {
                 .businessEmail(application.getBusinessEmail())
                 .build();
 
-        storeEventPublisher.publishStoreApplicationApproved(event);
+        userEventPublisher.publishStoreApplicationApproved(event);
 
         return toApplicationResponse(application);
     }

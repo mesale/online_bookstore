@@ -28,6 +28,7 @@ CREATE TABLE orders (
                         delivery_pin_used   BOOLEAN NOT NULL DEFAULT false,
                         delivery_pin_expiry TIMESTAMP,
                         stripe_payment_id   VARCHAR(255),
+                        stripe_account_id   VARCHAR(255),
                         created_at          TIMESTAMP NOT NULL DEFAULT now(),
                         updated_at          TIMESTAMP NOT NULL DEFAULT now()
 );

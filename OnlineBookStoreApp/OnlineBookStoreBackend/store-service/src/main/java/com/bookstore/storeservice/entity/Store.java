@@ -18,7 +18,7 @@ import java.util.UUID;
 public class Store {
 
     public enum Plan { FREE, PREMIUM }
-    public enum VerificationStatus { PENDING, APPROVED, REJECTED }
+    public enum VerificationStatus { PENDING, AWAITING_DOCS, DOCS_SUBMITTED, APPROVED, REJECTED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

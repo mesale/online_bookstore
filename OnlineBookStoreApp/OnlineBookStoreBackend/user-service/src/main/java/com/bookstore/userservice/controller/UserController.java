@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -50,24 +51,22 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("Profile Updated Successfully", response));
     }
 
-//    @GetMapping
-//    @PreAuthorize("hasRole('ADMIN')")
-//    public List<User> getUsers(){
-//        return keycloakUserService.getUsers();
-//    }
-//
-//    @GetMapping("/{id}")
-//    @PreAuthorize("hasRole('ADMIN')")
-//    public User adminEndpoint(@PathVariable long id){
-//        return keycloakUserService.getUser(id);
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    @PreAuthorize("hasRole('ADMIN')")
-//    public void deleteUser(@PathVariable long id){
-//        keycloakUserService.deleteUser(id);
-//    }
+    @PostMapping("/store/me/branch/{branchId}/employees")
+    @PreAuthorize("hasRole('STORE_ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> addEmployee(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID branchId,
+            @RequestBody EmployeeRequest request
+    ){
 
+        UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
 
+        UserResponse response = userService.addEmployee(storeId, branchId, request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Employee created", response));
+
+    }
 
 }

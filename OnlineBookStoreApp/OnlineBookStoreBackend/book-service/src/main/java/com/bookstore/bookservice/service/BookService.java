@@ -59,7 +59,7 @@ public class BookService {
     public BookResponse createBookAsOwner(String keycloakId, UUID storeId,
                                           CreateBookRequest request, MultipartFile image){
         Book book = Book.builder()
-                .keycloakId(keycloakId)
+                .createdBy(storeId)
                 .branchId(request.branchId())
                 .storeId(storeId)
                 .title(request.title())
@@ -140,7 +140,7 @@ public class BookService {
         }
 
         Book book = Book.builder()
-                .keycloakId(keycloakId)
+                .createdBy(branchId)
                 .branchId(branchId)
                 .storeId(storeId)
                 .title(request.title())
@@ -261,7 +261,7 @@ public class BookService {
 
         return new BookResponse(
                 book.getId(),
-                book.getKeycloakId(),
+                book.getCreatedBy(),
                 book.getBranchId(),
                 book.getStoreId(),
                 book.getTitle(),

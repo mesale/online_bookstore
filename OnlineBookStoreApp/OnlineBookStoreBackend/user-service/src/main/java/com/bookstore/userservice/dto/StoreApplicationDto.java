@@ -9,10 +9,31 @@ import java.util.UUID;
 
 public class StoreApplicationDto {
 
-    public record SubmitApplicationRequest(
+    public record InitiateApplicationRequest(
             @NotBlank(message = "business email is required")
             @Email(message = "invalid email")
             String businessEmail
+    ){}
+
+    public record SubmitApplicationRequest(
+            @NotBlank(message = "business email is required")
+            @Email(message = "invalid email")
+            String businessEmail,
+            UUID token,
+
+            @NotBlank(message = "store name is required")
+            String storeName,
+
+            @NotBlank(message = "phone is required")
+            String phone,
+
+            @NotBlank(message = "address is required")
+            String address,
+
+            @NotBlank(message = "city is required")
+            String city,
+
+            String description
     ){}
 
     public record StoreApplicationResponse(
@@ -23,6 +44,11 @@ public class StoreApplicationDto {
             String rejectionReason,
             LocalDateTime submittedAt,
             LocalDateTime reviewedAt
+    ){}
+    public record TokenValidationResponse(
+            boolean valid,
+            String message,
+            String email
     ){}
 
 }

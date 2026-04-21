@@ -1,14 +1,21 @@
 package com.bookstore.userservice.service;
 
+import com.bookstore.userservice.client.StoreClient;
 import com.bookstore.userservice.dto.UserDto.*;
+import com.bookstore.userservice.entity.Employee;
+import com.bookstore.userservice.entity.StoreOwner;
 import com.bookstore.userservice.entity.User;
+import com.bookstore.userservice.event.CreateStoreOwnerEvent;
 import com.bookstore.userservice.exception.ConflictException;
 import com.bookstore.userservice.exception.KeycloakException;
 import com.bookstore.userservice.exception.ResourceNotFoundException;
+import com.bookstore.userservice.repository.EmployeeRepository;
+import com.bookstore.userservice.repository.StoreOwnerRepository;
 import com.bookstore.userservice.repository.UserRepository;
-import jakarta.ws.rs.NotFoundException;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -16,13 +23,17 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
+    private final StoreOwnerRepository storeOwnerRepository;
+    private final EmployeeRepository employeeRepository;
+    private final StoreClient storeClient;
     private final Keycloak keycloak;
 
     @Value("${keycloak.realm}")
@@ -91,50 +102,110 @@ public class UserService {
         return touserResponse(userRepository.save(user));
     }
 
-//    public User userProfile(String keycloakId) {
-//        Optional<User> result = userRepository.findByKeycloakId(keycloakId);
-//        if (result.isPresent()) {
-//            return result.get();
-//        }
-//        throw new RuntimeException("User not found");
-//    }
-//
-//    public List<User> getUsers() {
-//        return userRepository.findAll().stream().toList();
-//    }
-//
-//    public User getUser(long id) {
-//
-//        Optional<User> result = userRepository.findById(id);
-//        if (result.isPresent()) {
-//            return result.get();
-//        }
-//        throw new NotFoundException("User was not found at id " + id);
-//    }
-//
-//    public void deleteUser(long id) {
-//        User user = userRepository.findById(id)
-//                .orElseThrow(() -> new NotFoundException("User was not found at id " + id));
-//        deleteKeycloakUser(user.getKeycloakId());
-//        userRepository.deleteById(id);
-//    }
-//
-//    private void deleteKeycloakUser(String keycloakId) {
-//        Keycloak keycloak = getKeycloakInstance();
-//        Response response = keycloak.realm(realm).users().delete(keycloakId);
-//        int status = response.getStatus();
-//        response.close();
-//
-//        if (status == 204 || status == 404) {
-//            return;
-//        }
-//
-//        if (status == 401 || status == 403) {
-//            throw new RuntimeException("Not authorized to delete user in Keycloak. Status: " + status);
-//        }
-//
-//        throw new RuntimeException("Failed to delete user in Keycloak. Status: " + status);
-//    }
+    @Transactional
+    public void createStoreOwnerFromStoreCreated(CreateStoreOwnerEvent event){
+
+        if (storeOwnerRepository.existsByStoreId(event.getStoreId())){
+            log.warn("Store already has an owner");
+            return;
+        }
+
+        User user = userRepository.findByKeycloakId(event.getUserKeycloakId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (storeOwnerRepository.existsByUserId(user.getId())){
+            log.warn("Store owner already exist");
+            return;
+        }
+
+        try {
+
+            RoleRepresentation storeAdmin = keycloak.realm(realm)
+                    .roles()
+                    .get("ROLE_STORE_ADMIN")
+                    .toRepresentation();
+
+            keycloak.realm(realm).users()
+                    .get(event.getUserKeycloakId())
+                    .roles().realmLevel()
+                    .add(Collections.singletonList(storeAdmin));
+
+
+        } catch(Exception ex){
+            log.warn("Could not assign ROLE_STORE_ADMIN to keycloakId: {}. " +
+                    "Role may already be assigned.", event.getUserKeycloakId());
+        }
+
+        StoreOwner storeOwner = StoreOwner.builder()
+                .storeId(event.getStoreId())
+                .userId(user.getId())
+                .build();
+
+        UserRepresentation updatedOwner = keycloak.realm(realm).users().get(event.getUserKeycloakId()).toRepresentation();
+        Map<String, List<String>> attributes = updatedOwner.getAttributes();
+        if (attributes == null) attributes = new HashMap<>();
+
+        attributes.put("store_id", List.of(event.getStoreId().toString()));
+        updatedOwner.setAttributes(attributes);
+
+        keycloak.realm(realm).users().get(event.getUserKeycloakId()).update(updatedOwner);
+
+        storeOwnerRepository.save(storeOwner);
+
+        log.info("StoreOwner created for storeId: {}", event.getStoreId());
+
+    }
+
+    @Transactional
+    public UserResponse addEmployee(UUID storeId, UUID branchId, EmployeeRequest request){
+
+        boolean branchExists = false;
+
+        try {
+            branchExists = storeClient
+                    .branchExists(storeId, branchId)
+                    .getBody().data();
+        }catch (Exception ex){
+            log.info("Failed to check if branch exists");
+            throw new ConflictException("Couldn't check if branch exists" + ex.getMessage());
+        }
+
+        User user = new User();
+
+        if (branchExists){
+             user = userRepository.findByEmail(request.email())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+
+            Employee employee = Employee.builder()
+                    .userId(user.getId())
+                    .branchId(branchId)
+                    .role(request.role())
+                    .build();
+
+            try {
+
+                RoleRepresentation storeAdmin = keycloak.realm(realm)
+                        .roles()
+                        .get("ROLE_" + request.role())
+                        .toRepresentation();
+
+                keycloak.realm(realm).users()
+                        .get(user.getKeycloakId())
+                        .roles().realmLevel()
+                        .add(Collections.singletonList(storeAdmin));
+
+
+            } catch(Exception ex){
+                log.warn("Could not assign ROLE_" + request.role() +" to keycloakId: {}. " +
+                        "Role may already be assigned.", user.getKeycloakId());
+            }
+
+            employeeRepository.save(employee);
+
+        }
+        return touserResponse(user);
+    }
 
     private UserResponse touserResponse(User user){
         return new UserResponse(
