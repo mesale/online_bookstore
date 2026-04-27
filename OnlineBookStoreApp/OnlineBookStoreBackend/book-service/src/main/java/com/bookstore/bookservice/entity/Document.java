@@ -13,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Documents {
+public class Document {
 
     public enum DocumentType {
         BOOK_IMAGE,
@@ -24,8 +24,9 @@ public class Documents {
     @GeneratedValue
     private UUID id;
 
-    @Column(name = "book_id", nullable = false)
-    private UUID bookId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id", nullable = false)
+    private Book book;
 
     @Column(name = "document_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
@@ -55,10 +56,6 @@ public class Documents {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
 
 
 }

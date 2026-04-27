@@ -74,4 +74,12 @@ public class StoreDto {
             String bankAccount
     ) {}
 
+    public record UploadResult(
+            String fileName,
+            String contentType,
+            long size,
+            String objectKey,
+            String bucketName
+    ) {}
+
 }

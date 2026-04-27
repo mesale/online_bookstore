@@ -1,11 +1,13 @@
 package com.bookstore.bookservice.dto;
 
 import com.bookstore.bookservice.entity.Book;
+import com.bookstore.bookservice.entity.Document;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class BookDto {
@@ -54,7 +56,7 @@ public class BookDto {
             Book.Condition condition
     ){}
 
-    public record BookResponse(
+    public record   BookResponse(
             UUID id,
             UUID createdBy,
             UUID branchId,
@@ -64,10 +66,19 @@ public class BookDto {
             String description,
             String category,
             BigDecimal price,
+            List<DocumentResponse> documentResponses,
             String condition,
-            String imageUrl,
             Boolean approved,
             LocalDateTime createdAt
+    ){}
+
+    public record DocumentResponse(
+            UUID id,
+            Document.DocumentType documentType,
+            String fileName,
+            UUID uploadedBy
+
+
     ){}
 
     public record BookSummaryResponse(
@@ -78,7 +89,15 @@ public class BookDto {
             String category,
             BigDecimal price,
             String condition,
-            String imageUrl
+            List<DocumentResponse> documentResponses
+    ) {}
+
+    public record UploadResult(
+            String fileName,
+            String contentType,
+            long size,
+            String objectKey,
+            String bucketName
     ) {}
 
 }

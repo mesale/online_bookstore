@@ -1,5 +1,6 @@
 package com.bookstore.bookservice.service;
 
+import com.bookstore.bookservice.dto.BookDto;
 import io.minio.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ public class MinioService {
     @Value("${minio.bucket-name}")
     private String bucketName;
 
-    public String uploadImage(MultipartFile file, String objectName){
+    public BookDto.UploadResult uploadImage(MultipartFile file, String objectName){
 
         try{
 
@@ -53,7 +54,13 @@ public class MinioService {
             );
 
             log.info("Uploaded image: {}", objectName);
-            return objectName;
+            return new BookDto.UploadResult(
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getSize(),
+                    objectName,
+                    bucketName
+            );
 
         }catch (Exception e){
             log.error("Failed to upload image: {}", objectName, e);

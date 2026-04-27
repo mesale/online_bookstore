@@ -1,5 +1,6 @@
 package com.bookstore.storeservice.service;
 
+import com.bookstore.storeservice.dto.StoreDto.UploadResult;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ public class MinioService {
     @Value("${minio.url}")
     private String minioUrl;
 
-    public String uploadFile(MultipartFile file, String folder) {
+    public UploadResult uploadFile(MultipartFile file, String folder) {
         try {
 
             if (file == null || file.isEmpty()) {
@@ -55,7 +56,13 @@ public class MinioService {
 
             String url = minioUrl + "/" + bucket + "/" + objectName;
             log.info("Uploaded file to MinIO: {}", url);
-            return url;
+            return new UploadResult(
+                    originalName,
+                    contentType,
+                    file.getSize(),
+                    objectName,
+                    bucket
+            );
 
         } catch (Exception e) {
             log.error("Failed to upload file to MinIO", e);

@@ -55,6 +55,8 @@ public class StoreBookController {
 
     }
 
+
+
     @PutMapping(value = "/{bookId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<BookResponse>> updateBook(

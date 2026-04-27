@@ -7,12 +7,15 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.stereotype.Controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
-@Data
+
 @Entity
 @Table(name = "stores", schema = "svc_store")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Store {
@@ -32,12 +35,6 @@ public class Store {
 
     @Column(nullable = false, unique = true)
     private String tin;
-
-    @Column(name = "owner_id_url")
-    private String ownerIdUrl;
-
-    @Column(name = "business_license_url")
-    private String businessLicenseUrl;
 
     @Column(name = "bank_name")
     private String bankName;
@@ -73,6 +70,9 @@ public class Store {
 
     @Column(name = "rejection_reason")
     private String rejectionReason;
+
+    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<Document> documents;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

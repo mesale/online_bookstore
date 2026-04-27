@@ -25,11 +25,9 @@ public class Document {
     @GeneratedValue
     private UUID id;
 
-    @Column(name = "store_id")
-    private UUID storeId;
-
-    @Column(name = "branch_id")
-    private UUID branchId;
+    @ManyToOne
+    @JoinColumn(name = "store_id", nullable = false)
+    private Store store;
 
     @Column(name = "document_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)

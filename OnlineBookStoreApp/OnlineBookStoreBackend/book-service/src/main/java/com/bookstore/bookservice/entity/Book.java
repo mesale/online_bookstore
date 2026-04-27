@@ -8,6 +8,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -52,8 +54,7 @@ public class Book {
     @Column(nullable = false)
     private Condition condition;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    private List<Document> documents = new ArrayList<>();
 
     @Column(nullable = false)
     private boolean approved = false;

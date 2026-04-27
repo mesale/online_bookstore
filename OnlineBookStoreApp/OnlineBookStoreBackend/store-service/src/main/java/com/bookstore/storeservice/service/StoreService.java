@@ -1,6 +1,7 @@
 package com.bookstore.storeservice.service;
 
 import com.bookstore.storeservice.dto.StoreDto.*;
+import com.bookstore.storeservice.entity.Document;
 import com.bookstore.storeservice.entity.Store;
 import com.bookstore.storeservice.event.*;
 import com.bookstore.storeservice.exception.ConflictException;
@@ -98,8 +99,8 @@ public class StoreService {
         log.info("Owner file name: {}", ownerIdFile.getOriginalFilename());
         log.info("License file name: {}", businessLicenseFile.getOriginalFilename());
 
-        String ownerIdUrl = minioService.uploadFile(ownerIdFile, "owner-id");
-        String licenseUrl = minioService.uploadFile(businessLicenseFile, "business-license");
+        UploadResult ownerUpload = minioService.uploadFile(ownerIdFile, "owner-id");
+        UploadResult licenseUpload = minioService.uploadFile(businessLicenseFile, "business-license");
 
         store.setStoreName(request.storeName());
         store.setBusinessRegNumber(request.businessRegNumber());
@@ -109,9 +110,34 @@ public class StoreService {
         store.setAddress(request.address());
         store.setBankName(request.bankName());
         store.setBankAccount(request.bankAccount());
-        store.setOwnerIdUrl(ownerIdUrl);
-        store.setBusinessLicenseUrl(licenseUrl);
         store.setVerificationStatus(Store.VerificationStatus.DOCS_SUBMITTED);
+
+        List<Document> documents = new ArrayList<>();
+
+        Document ownerDoc = Document.builder()
+                .store(store)
+                .documentType(Document.DocumentType.OWNER_ID)
+                .fileName(ownerUpload.fileName())
+                .contentType(ownerUpload.contentType())
+                .fileSize(ownerUpload.size())
+                .objectKey(ownerUpload.objectKey())
+                .bucketName(ownerUpload.bucketName())
+                .build();
+
+        Document licenseDoc = Document.builder()
+                .store(store)
+                .documentType(Document.DocumentType.BUSINESS_LICENSE)
+                .fileName(licenseUpload.fileName())
+                .contentType(licenseUpload.contentType())
+                .fileSize(licenseUpload.size())
+                .objectKey(licenseUpload.objectKey())
+                .bucketName(licenseUpload.bucketName())
+                .build();
+
+        documents.add(ownerDoc);
+        documents.add(licenseDoc);
+
+        store.setDocuments(documents);
 
         return toStoreResponse(storeRepository.save(store));
 

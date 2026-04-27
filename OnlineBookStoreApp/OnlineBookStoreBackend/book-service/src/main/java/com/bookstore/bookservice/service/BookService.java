@@ -2,6 +2,7 @@ package com.bookstore.bookservice.service;
 
 import com.bookstore.bookservice.dto.BookDto.*;
 import com.bookstore.bookservice.entity.Book;
+import com.bookstore.bookservice.entity.Document;
 import com.bookstore.bookservice.exception.ConflictException;
 import com.bookstore.bookservice.exception.ResourceNotFoundException;
 import com.bookstore.bookservice.exception.UnauthorizedException;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -74,8 +76,21 @@ public class BookService {
         if (image != null && !image.isEmpty()){
             String objectName = "books/" + UUID.randomUUID() + "/"
                     + image.getOriginalFilename();
-            minioService.uploadImage(image, objectName);
-            book.setImageUrl(minioService.getImageUrl(objectName));
+            UploadResult upload =  minioService.uploadImage(image, objectName);
+
+            Document document = Document.builder()
+                    .documentType(Document.DocumentType.BOOK_IMAGE)
+                    .fileName(upload.fileName())
+                    .contentType(upload.contentType())
+                    .fileSize(upload.size())
+                    .objectKey(upload.objectKey())
+                    .bucketName(upload.bucketName())
+                    .uploadedBy(storeId)
+                    .isPrimary(true)
+                    .build();
+
+            book.getDocuments().add(document);
+
         }
 
         return toBookResponse(bookRepository.save(book));
@@ -96,14 +111,35 @@ public class BookService {
         book.setCondition(request.condition());
 
         if (image != null && !image.isEmpty()){
-            if (book.getImageUrl()!= null){
-                String oldObjectName = extractObjectName(book.getImageUrl());
-                minioService.deleteImage(oldObjectName);
-            }
+            book.getDocuments().stream()
+                    .filter(doc ->
+                            doc.getDocumentType() == Document.DocumentType.BOOK_IMAGE &&
+                                    Boolean.TRUE.equals(doc.getIsPrimary()))
+                    .findFirst()
+                    .ifPresent(existingImage ->{
+                        minioService.deleteImage(existingImage.getObjectKey());
+                        book.getDocuments().remove(existingImage);
+
+                    });
+
+
             String objectName = "books/" + UUID.randomUUID() + "/"
                     + image.getOriginalFilename();
-            minioService.uploadImage(image, objectName);
-            book.setImageUrl(minioService.getImageUrl(objectName));
+            UploadResult upload = minioService.uploadImage(image, objectName);
+
+            Document document = Document.builder()
+                    .documentType(Document.DocumentType.BOOK_IMAGE)
+                    .fileName(upload.fileName())
+                    .contentType(upload.contentType())
+                    .fileSize(upload.size())
+                    .objectKey(upload.objectKey())
+                    .bucketName(upload.bucketName())
+                    .uploadedBy(storeId)
+                    .isPrimary(true)
+                    .build();
+
+            book.getDocuments().add(document);
+
         }
 
         return toBookResponse(bookRepository.save(book));
@@ -112,11 +148,13 @@ public class BookService {
 
     public void deleteBookAsOwner(String keycloakId, UUID storeId, UUID bookId){
 
-        Book book = bookRepository.findById(bookId)
+        Book book = bookRepository.findByIdAndStoreId(bookId, storeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
 
-        if (book.getImageUrl() != null)
-            minioService.deleteImage(extractObjectName(book.getImageUrl()));
+        if (book.getDocuments() != null && !book.getDocuments().isEmpty())
+
+            for(Document document : book.getDocuments())
+                minioService.deleteImage(document.getObjectKey());
 
         bookRepository.delete(book);
 
@@ -155,8 +193,19 @@ public class BookService {
         if (image != null && !image.isEmpty()) {
             String objectName = "books/" + UUID.randomUUID() + "/"
                     + image.getOriginalFilename();
-            minioService.uploadImage(image, objectName);
-            book.setImageUrl(minioService.getImageUrl(objectName));
+            UploadResult upload =  minioService.uploadImage(image, objectName);
+
+            Document document = Document.builder()
+                    .documentType(Document.DocumentType.BOOK_IMAGE)
+                    .fileName(upload.fileName())
+                    .contentType(upload.contentType())
+                    .fileSize(upload.size())
+                    .objectKey(upload.objectKey())
+                    .bucketName(upload.bucketName())
+                    .uploadedBy(storeId)
+                    .isPrimary(true)
+                    .build();
+            book.getDocuments().add(document);
         }
 
         return toBookResponse(bookRepository.save(book));
@@ -176,13 +225,33 @@ public class BookService {
         book.setCondition(request.condition());
 
         if (image != null && !image.isEmpty()) {
-            if (book.getImageUrl() != null) {
-                minioService.deleteImage(extractObjectName(book.getImageUrl()));
-            }
+            book.getDocuments().stream()
+                    .filter(doc ->
+                            doc.getDocumentType() == Document.DocumentType.BOOK_IMAGE &&
+                                    Boolean.TRUE.equals(doc.getIsPrimary()))
+                    .findFirst()
+                    .ifPresent(existingImage ->{
+                        minioService.deleteImage(existingImage.getObjectKey());
+                        book.getDocuments().remove(existingImage);
+
+                    });
             String objectName = "books/" + UUID.randomUUID() + "/"
                     + image.getOriginalFilename();
-            minioService.uploadImage(image, objectName);
-            book.setImageUrl(minioService.getImageUrl(objectName));
+
+            UploadResult upload = minioService.uploadImage(image, objectName);
+
+            Document document = Document.builder()
+                    .documentType(Document.DocumentType.BOOK_IMAGE)
+                    .fileName(upload.fileName())
+                    .contentType(upload.contentType())
+                    .fileSize(upload.size())
+                    .objectKey(upload.objectKey())
+                    .bucketName(upload.bucketName())
+                    .uploadedBy(branchId)
+                    .isPrimary(true)
+                    .build();
+
+            book.getDocuments().add(document);
         }
 
         return toBookResponse(bookRepository.save(book));
@@ -192,8 +261,10 @@ public class BookService {
         Book book = bookRepository.findByIdAndBranchId(bookId, branchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
 
-        if (book.getImageUrl() != null) {
-            minioService.deleteImage(extractObjectName(book.getImageUrl()));
+        if (book.getDocuments() != null && !book.getDocuments().isEmpty()) {
+
+            for (Document document : book.getDocuments())
+                minioService.deleteImage(document.getObjectKey());
         }
 
         bookRepository.delete(book);
@@ -232,8 +303,9 @@ public class BookService {
         if(book.isApproved())
             throw new ConflictException("Cannot reject already approved book");
 
-        if(book.getImageUrl() != null)
-            minioService.deleteImage(extractObjectName(book.getImageUrl()));
+        if(book.getDocuments() != null && !book.getDocuments().isEmpty())
+            for (Document document : book.getDocuments())
+                minioService.deleteImage(document.getObjectKey());
 
         bookRepository.delete(book);
 
@@ -244,8 +316,9 @@ public class BookService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
 
-        if (book.getImageUrl() != null)
-            minioService.deleteImage(extractObjectName(book.getImageUrl()));
+        if (book.getDocuments() != null && !book.getDocuments().isEmpty())
+            for (Document document : book.getDocuments())
+                minioService.deleteImage(document.getObjectKey());
 
         bookRepository.delete(book);
 
@@ -269,12 +342,21 @@ public class BookService {
                 book.getDescription(),
                 book.getCategory(),
                 book.getPrice(),
+                book.getDocuments().stream().map(this::toDocumentResponse).toList(),
                 book.getCondition().name(),
-                book.getImageUrl(),
                 book.isApproved(),
                 book.getCreatedAt()
         );
 
+    }
+
+    private DocumentResponse toDocumentResponse(Document document){
+        return new DocumentResponse(
+                document.getId(),
+                document.getDocumentType(),
+                document.getFileName(),
+                document.getUploadedBy()
+        );
     }
 
     private BookSummaryResponse toBookSummaryResponse(Book book) {
@@ -287,7 +369,7 @@ public class BookService {
                 book.getCategory(),
                 book.getPrice(),
                 book.getCondition().name(),
-                book.getImageUrl()
+                book.getDocuments().stream().map(this::toDocumentResponse).toList()
         );
 
     }

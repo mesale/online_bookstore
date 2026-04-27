@@ -14,7 +14,6 @@ CREATE TABLE books (
                        price           DECIMAL(10, 2) NOT NULL CHECK (price > 0),
                        condition       VARCHAR(10) NOT NULL
                            CHECK (condition IN ('NEW', 'GOOD', 'FAIR', 'POOR')),
-                       image_url       VARCHAR(500),
                        approved        BOOLEAN NOT NULL DEFAULT false,
                        created_at      TIMESTAMP NOT NULL DEFAULT now(),
                        updated_at      TIMESTAMP NOT NULL DEFAULT now()
