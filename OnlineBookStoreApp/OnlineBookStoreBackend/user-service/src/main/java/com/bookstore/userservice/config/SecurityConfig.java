@@ -30,7 +30,7 @@ public class SecurityConfig {
                 )
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers( "/api/users/register", "/actuator/health", "/api/users/me/store-application/**").permitAll()
+                        .requestMatchers( "/api/users/register", "/actuator/health" ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(resourceServer ->

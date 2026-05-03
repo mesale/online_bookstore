@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/store/me/branch")
+@RequestMapping("/api/stores/me/branch")
 public class BranchController {
 
     private final BranchService branchService;
@@ -71,11 +71,11 @@ public class BranchController {
     @GetMapping("/{branchId}/exists")
     @PreAuthorize("hasRole('STORE_ADMIN')")
     public ResponseEntity<ApiResponse<Boolean>> branchExists(
-            UUID storeId,
+            @RequestParam UUID storeId,
             @PathVariable UUID branchId
     ){
 
-        boolean response = branchService.branchExists(storeId, branchId);
+        boolean response = branchService.branchExists(branchId, storeId);
 
         return ResponseEntity.ok(ApiResponse.ok(response));
 

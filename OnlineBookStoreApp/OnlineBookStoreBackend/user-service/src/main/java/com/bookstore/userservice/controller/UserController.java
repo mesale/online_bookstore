@@ -51,7 +51,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("Profile Updated Successfully", response));
     }
 
-    @PostMapping("/store/me/branch/{branchId}/employees")
+    @PostMapping("/stores/me/branch/{branchId}/employees")
     @PreAuthorize("hasRole('STORE_ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> addEmployee(
             @AuthenticationPrincipal Jwt jwt,

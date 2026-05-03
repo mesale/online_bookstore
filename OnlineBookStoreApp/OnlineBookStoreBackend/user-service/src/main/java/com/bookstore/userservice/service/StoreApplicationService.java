@@ -12,6 +12,7 @@ import com.bookstore.userservice.repository.StoreApplicationRepository;
 import com.bookstore.userservice.repository.StoreApplicationTokenRepository;
 import com.bookstore.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -24,6 +25,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StoreApplicationService {
 
     private final StoreApplicationRepository applicationRepository;
@@ -37,9 +39,12 @@ public class StoreApplicationService {
     private String realm;
 
     public void initiateApplication(String keycloakId, String businessEmail){
-
+        log.info("Starting store application for userId: {}, email: {}", keycloakId, businessEmail);
         User user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new ResourceNotFoundException("user not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found for keycloakId: {}", keycloakId);
+                   return new ResourceNotFoundException("user not found");
+                });
 
         UUID token = UUID.randomUUID();
 
@@ -50,10 +55,13 @@ public class StoreApplicationService {
                 .expiresAt(LocalDateTime.now().plusHours(48))
                 .used(false)
                 .build();
+        log.info("User found: {}", user.getId());
 
         tokenRepository.save(appToken);
+        log.info("Token saved: {}", token);
 
         emailService.sendStoreApplicationEmail(businessEmail, user.getName(), token.toString());
+        log.info("Email sent successfully");
 
     }
 

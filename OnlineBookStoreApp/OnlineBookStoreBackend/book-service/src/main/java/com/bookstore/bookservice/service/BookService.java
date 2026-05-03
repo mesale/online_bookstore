@@ -7,6 +7,9 @@ import com.bookstore.bookservice.exception.ConflictException;
 import com.bookstore.bookservice.exception.ResourceNotFoundException;
 import com.bookstore.bookservice.exception.UnauthorizedException;
 import com.bookstore.bookservice.repository.BookRepository;
+import com.bookstore.bookservice.repository.DocumentRepository;
+import jakarta.persistence.Table;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -14,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +27,7 @@ import java.util.UUID;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final DocumentRepository documentRepository;
     private final MinioService minioService;
 
     public Page<BookSummaryResponse> getApprovedBooks(Pageable pageable){
@@ -62,7 +67,7 @@ public class BookService {
                                           CreateBookRequest request, MultipartFile image){
         Book book = Book.builder()
                 .createdBy(storeId)
-                .branchId(request.branchId())
+                .branchId(storeId)
                 .storeId(storeId)
                 .title(request.title())
                 .author(request.author())
@@ -89,6 +94,7 @@ public class BookService {
                     .isPrimary(true)
                     .build();
 
+            document.setBook(book);
             book.getDocuments().add(document);
 
         }
@@ -168,14 +174,9 @@ public class BookService {
                 .toList();
     }
 
+    @Transactional
     public BookResponse createBookAsEmployee(String keycloakId, UUID branchId,
                                              UUID storeId, CreateBookRequest request, MultipartFile image) {
-
-        // Employee can only add books to their own branch
-        if (!request.branchId().equals(branchId)) {
-            throw new UnauthorizedException(
-                    "You can only add books to your assigned branch");
-        }
 
         Book book = Book.builder()
                 .createdBy(branchId)
@@ -190,6 +191,11 @@ public class BookService {
                 .approved(false)
                 .build();
 
+        if (book.getDocuments() == null)
+            book.setDocuments(new ArrayList<>());
+
+        book = bookRepository.save(book);
+
         if (image != null && !image.isEmpty()) {
             String objectName = "books/" + UUID.randomUUID() + "/"
                     + image.getOriginalFilename();
@@ -197,6 +203,7 @@ public class BookService {
 
             Document document = Document.builder()
                     .documentType(Document.DocumentType.BOOK_IMAGE)
+                    .book(book)
                     .fileName(upload.fileName())
                     .contentType(upload.contentType())
                     .fileSize(upload.size())
@@ -205,10 +212,12 @@ public class BookService {
                     .uploadedBy(storeId)
                     .isPrimary(true)
                     .build();
+
             book.getDocuments().add(document);
         }
+        Book savedBook = bookRepository.save(book);
 
-        return toBookResponse(bookRepository.save(book));
+        return toBookResponse(savedBook);
     }
 
     public BookResponse updateBookAsEmployee(String keycloakId, UUID branchId,
@@ -354,6 +363,7 @@ public class BookService {
         return new DocumentResponse(
                 document.getId(),
                 document.getDocumentType(),
+                minioService.getFileUrl(document.getBucketName(), document.getObjectKey()),
                 document.getFileName(),
                 document.getUploadedBy()
         );

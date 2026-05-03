@@ -112,7 +112,7 @@ public class StoreService {
         store.setBankAccount(request.bankAccount());
         store.setVerificationStatus(Store.VerificationStatus.DOCS_SUBMITTED);
 
-        List<Document> documents = new ArrayList<>();
+
 
         Document ownerDoc = Document.builder()
                 .store(store)
@@ -134,10 +134,10 @@ public class StoreService {
                 .bucketName(licenseUpload.bucketName())
                 .build();
 
-        documents.add(ownerDoc);
-        documents.add(licenseDoc);
 
-        store.setDocuments(documents);
+
+        store.getDocuments().add(ownerDoc);
+        store.getDocuments().add(licenseDoc);
 
         return toStoreResponse(storeRepository.save(store));
 

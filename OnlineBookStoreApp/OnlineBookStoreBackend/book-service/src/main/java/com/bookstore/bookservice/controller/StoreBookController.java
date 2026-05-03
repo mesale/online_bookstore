@@ -23,13 +23,13 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/store/books")
+@RequestMapping("/api/books/store")
 public class StoreBookController {
 
     private final BookService bookService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('STORE_ADMIN') or  hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('STORE_ADMIN') or  hasRole('WORKER') or hasRole('BRANCH_MANAGER')")
     public ResponseEntity<ApiResponse<BookResponse>> createBook(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestPart("data") CreateBookRequest request,
@@ -58,7 +58,7 @@ public class StoreBookController {
 
 
     @PutMapping(value = "/{bookId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('WORKER') or hasRole('BRANCH_MANAGER')")
     public ResponseEntity<ApiResponse<BookResponse>> updateBook(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID bookId,

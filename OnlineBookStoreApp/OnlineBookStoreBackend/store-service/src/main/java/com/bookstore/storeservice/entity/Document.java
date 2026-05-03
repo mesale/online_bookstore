@@ -2,6 +2,7 @@ package com.bookstore.storeservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -51,6 +52,7 @@ public class Document {
     @Column(name = "uploaded_by")
     private UUID uploadedBy;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

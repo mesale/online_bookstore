@@ -54,6 +54,8 @@ public class Book {
     @Column(nullable = false)
     private Condition condition;
 
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Document> documents = new ArrayList<>();
 
     @Column(nullable = false)

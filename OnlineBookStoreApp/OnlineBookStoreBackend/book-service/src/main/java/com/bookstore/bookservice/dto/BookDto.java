@@ -29,10 +29,8 @@ public class BookDto {
             BigDecimal price,
 
             @NotNull(message = "Condition is required")
-            Book.Condition condition,
+            Book.Condition condition
 
-            @NotNull(message = "Branch ID is required")
-            UUID branchId
     ){}
 
     public record UpdateBookRequest(
@@ -66,7 +64,7 @@ public class BookDto {
             String description,
             String category,
             BigDecimal price,
-            List<DocumentResponse> documentResponses,
+            List<DocumentResponse> documents,
             String condition,
             Boolean approved,
             LocalDateTime createdAt
@@ -75,6 +73,7 @@ public class BookDto {
     public record DocumentResponse(
             UUID id,
             Document.DocumentType documentType,
+            String url,
             String fileName,
             UUID uploadedBy
 
@@ -89,7 +88,7 @@ public class BookDto {
             String category,
             BigDecimal price,
             String condition,
-            List<DocumentResponse> documentResponses
+            List<DocumentResponse> documents
     ) {}
 
     public record UploadResult(

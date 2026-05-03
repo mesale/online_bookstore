@@ -8,8 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.stream.Stream;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -19,6 +17,9 @@ public class MinioService {
 
     @Value("${minio.bucket-name}")
     private String bucketName;
+
+    @Value("${minio.external.url}")
+    private String minioExternalUrl;
 
     public BookDto.UploadResult uploadImage(MultipartFile file, String objectName){
 
@@ -87,8 +88,8 @@ public class MinioService {
 
     }
 
-    public String getImageUrl(String objectName){
-        return "http://loacalhost:9000/" + bucketName + "/" + objectName;
+    public String getFileUrl(String bucketName, String objectKey) {
+        return minioExternalUrl + "/" + bucketName + "/" + objectKey;
     }
 
     public String buildPublicReadPolicy(String bucketName){

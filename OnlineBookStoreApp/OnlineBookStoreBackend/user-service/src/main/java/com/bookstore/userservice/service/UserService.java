@@ -170,40 +170,48 @@ public class UserService {
             throw new ConflictException("Couldn't check if branch exists" + ex.getMessage());
         }
 
-        User user = new User();
+        if (!branchExists)
+            throw new RuntimeException("branch don't exist");
 
-        if (branchExists){
-             user = userRepository.findByEmail(request.email())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-
-            Employee employee = Employee.builder()
-                    .userId(user.getId())
-                    .branchId(branchId)
-                    .role(request.role())
-                    .build();
-
-            try {
-
-                RoleRepresentation storeAdmin = keycloak.realm(realm)
-                        .roles()
-                        .get("ROLE_" + request.role())
-                        .toRepresentation();
-
-                keycloak.realm(realm).users()
-                        .get(user.getKeycloakId())
-                        .roles().realmLevel()
-                        .add(Collections.singletonList(storeAdmin));
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
 
-            } catch(Exception ex){
-                log.warn("Could not assign ROLE_" + request.role() +" to keycloakId: {}. " +
-                        "Role may already be assigned.", user.getKeycloakId());
-            }
+        Employee employee = Employee.builder()
+                .userId(user.getId())
+                .branchId(branchId)
+                .role(request.role())
+                .build();
 
-            employeeRepository.save(employee);
+        UserRepresentation updatedEmployee = keycloak.realm(realm).users().get(user.getKeycloakId()).toRepresentation();
+        Map<String, List<String>> attributes = updatedEmployee.getAttributes();
+        if (attributes == null) attributes = new HashMap<>();
 
+        attributes.put("store_id", List.of(storeId.toString()));
+        attributes.put("branch_id", List.of((branchId.toString())));
+        updatedEmployee.setAttributes(attributes);
+
+        keycloak.realm(realm).users().get(user.getKeycloakId()).update(updatedEmployee);
+
+        try {
+
+            RoleRepresentation storeAdmin = keycloak.realm(realm)
+                    .roles()
+                    .get("ROLE_" + request.role())
+                    .toRepresentation();
+
+            keycloak.realm(realm).users()
+                    .get(user.getKeycloakId())
+                    .roles().realmLevel()
+                    .add(Collections.singletonList(storeAdmin));
+
+
+        } catch(Exception ex){
+            log.warn("Could not assign ROLE_" + request.role() +" to keycloakId: {}. " +
+                    "Role may already be assigned.", user.getKeycloakId());
         }
+        employeeRepository.save(employee);
+
         return touserResponse(user);
     }
 

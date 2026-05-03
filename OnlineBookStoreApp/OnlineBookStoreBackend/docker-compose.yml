@@ -46,7 +46,8 @@ services:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://bookstore-postgres:5432/keycloak_db
       KC_DB_USERNAME: postgres
-      KC_DB_PASSWORD: postgres
+      KC_DB_PASSWORD: postgres 
+      KC_SPI_THEME_DEFAULT: readbooks
 
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin123
@@ -54,6 +55,7 @@ services:
       - "8080:8080"
     volumes:
       - keycloak_data:/opt/keycloak/data
+      - ./keycloak/themes:/opt/keycloak/themes:z
     networks:
       - bookstore-network
     depends_on:
@@ -101,7 +103,17 @@ services:
       bookstore-postgres:
         condition: service_healthy
 
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8087:8087"
 
+    networks:
+      - bookstore-network
+    depends_on:
+      discovery-service:
+        condition: service_started
   user-service:
     build: ./user-service
     container_name: user-service
