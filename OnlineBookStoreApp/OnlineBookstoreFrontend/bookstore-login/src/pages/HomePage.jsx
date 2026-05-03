@@ -12,7 +12,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
       <nav className="bg-white shadow px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-green-600">📚 Bookstore</h1>
+        <h1 className="text-xl font-bold text-green-600"> Bookstore</h1>
         <div className="flex gap-3">
           {!isLoggedIn ? (
             <>

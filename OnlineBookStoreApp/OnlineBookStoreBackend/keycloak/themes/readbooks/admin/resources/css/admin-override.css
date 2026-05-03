@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+
+body, html {
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+/* Top navbar */
+.navbar, .navbar-header {
+  background-color: #1A1A2E !important;
+  border-bottom: 2px solid #E63946 !important;
+}
+
+.navbar-brand {
+  color: white !important;
+  font-weight: 700 !important;
+}
+
+/* Primary buttons */
+.btn-primary {
+  background-color: #E63946 !important;
+  border-color: #E63946 !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+}
+
+.btn-primary:hover {
+  background-color: #c0303b !important;
+  border-color: #c0303b !important;
+}
+
+/* Sidebar */
+.nav-stacked > li.active > a,
+.nav-stacked > li.active > a:hover {
+  background-color: #E63946 !important;
+  border-color: #E63946 !important;
+}
+
+.nav-stacked > li > a:hover {
+  color: #E63946 !important;
+}
+
+/* Links */
+a { color: #E63946 !important; }
+a:hover { color: #c0303b !important; }

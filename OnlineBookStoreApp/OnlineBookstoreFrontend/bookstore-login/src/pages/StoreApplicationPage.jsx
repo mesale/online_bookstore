@@ -82,7 +82,7 @@ export default function StoreApplicationPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-5xl mb-4">❌</div>
+          <div className="text-5xl mb-4"></div>
           <h2 className="text-2xl font-semibold text-red-500 mb-2">
             Invalid or Expired Link
           </h2>
@@ -105,7 +105,7 @@ export default function StoreApplicationPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-5xl mb-4">🎉</div>
+          <div className="text-5xl mb-4"></div>
           <h2 className="text-2xl font-bold text-green-600 mb-2">
             Application Submitted!
           </h2>
