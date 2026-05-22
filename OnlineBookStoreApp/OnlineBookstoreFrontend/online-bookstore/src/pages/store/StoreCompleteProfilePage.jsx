@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../api/axiosInstance";
-<<<<<<< HEAD
-=======
 import { FiFileText, FiCheckCircle, FiMail, FiHome, FiAlertTriangle } from "react-icons/fi";
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
 
 function CompleteProfileStage({ token }) {
   const navigate = useNavigate();
@@ -25,14 +22,14 @@ function CompleteProfileStage({ token }) {
   });
 
   const REGIONS = [
-    "Addis Ababa","Oromia","Amhara","Tigray",
-    "SNNPR","Somali","Afar","Benishangul-Gumuz","Gambela","Harari","Dire Dawa",
+    "Addis Ababa", "Oromia", "Amhara", "Tigray",
+    "SNNPR", "Somali", "Afar", "Benishangul-Gumuz", "Gambela", "Harari", "Dire Dawa",
   ];
 
   const BANKS = [
-    "Commercial Bank of Ethiopia","Awash Bank","Dashen Bank",
-    "Bank of Abyssinia","Wegagen Bank","United Bank","Zemen Bank",
-    "Oromia Cooperative Bank","NIB International Bank","Lion International Bank",
+    "Commercial Bank of Ethiopia", "Awash Bank", "Dashen Bank",
+    "Bank of Abyssinia", "Wegagen Bank", "United Bank", "Zemen Bank",
+    "Oromia Cooperative Bank", "NIB International Bank", "Lion International Bank",
   ];
 
   const setField = (key, value) => {
@@ -42,14 +39,14 @@ function CompleteProfileStage({ token }) {
 
   const validate = () => {
     const errors = {};
-    if (!form.storeName.trim())          errors.storeName          = "Required";
-    if (!form.businessRegNumber.trim())  errors.businessRegNumber  = "Required";
-    if (!form.tin.trim())                errors.tin                = "Required";
-    if (!form.region.trim())             errors.region             = "Required";
-    if (!form.city.trim())               errors.city               = "Required";
-    if (!form.address.trim())            errors.address            = "Required";
-    if (!files.ownerIdFile)              errors.ownerIdFile        = "Owner ID is required";
-    if (!files.businessLicenseFile)      errors.businessLicenseFile = "Business license is required";
+    if (!form.storeName.trim()) errors.storeName = "Required";
+    if (!form.businessRegNumber.trim()) errors.businessRegNumber = "Required";
+    if (!form.tin.trim()) errors.tin = "Required";
+    if (!form.region.trim()) errors.region = "Required";
+    if (!form.city.trim()) errors.city = "Required";
+    if (!form.address.trim()) errors.address = "Required";
+    if (!files.ownerIdFile) errors.ownerIdFile = "Owner ID is required";
+    if (!files.businessLicenseFile) errors.businessLicenseFile = "Business license is required";
     return errors;
   };
 
@@ -85,33 +82,11 @@ function CompleteProfileStage({ token }) {
   if (submitted) {
     return (
       <div className="text-center">
-<<<<<<< HEAD
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
-=======
         <div className="w-20 h-20 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-5">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
           <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-<<<<<<< HEAD
-        <h2 className="font-display font-bold text-2xl text-textMain mb-2">
-          Profile Complete!
-        </h2>
-        <p className="text-textMuted text-sm leading-relaxed max-w-sm mx-auto mb-6">
-          Your store profile has been submitted for review. Our admin team will verify your documents and approve your store. You'll receive an email with your login credentials once approved.
-        </p>
-        <div className="bg-surface rounded-2xl p-4 text-left max-w-sm mx-auto mb-6 text-xs text-textMuted space-y-2">
-          <p className="font-semibold text-textMain text-sm mb-2">What happens next?</p>
-          <p>📋 Admin reviews your documents</p>
-          <p>✅ Store gets approved</p>
-          <p>📧 You receive login credentials by email</p>
-          <p>🏪 You can start listing books</p>
-        </div>
-        <button
-          onClick={() => navigate("/")}
-          className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-red-600 transition-colors"
-=======
         <h2 className="font-display font-bold text-2xl text-on-surface mb-2">
           Profile Complete!
         </h2>
@@ -128,7 +103,6 @@ function CompleteProfileStage({ token }) {
         <button
           onClick={() => navigate("/")}
           className="bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-container transition-colors"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
         >
           Back to Home
         </button>
@@ -138,28 +112,16 @@ function CompleteProfileStage({ token }) {
 
   return (
     <div>
-<<<<<<< HEAD
-      <h2 className="font-display font-bold text-2xl text-textMain mb-2">
-        Complete Store Profile
-      </h2>
-      <p className="text-textMuted text-sm mb-8">
-=======
       <h2 className="font-display font-bold text-2xl text-on-surface mb-2">
         Complete Store Profile
       </h2>
       <p className="text-on-surface-variant text-sm mb-8">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
         Provide your official business details and upload required documents for verification.
       </p>
 
       {error && (
-<<<<<<< HEAD
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm mb-5 flex gap-2">
-          <span>⚠</span> {error}
-=======
         <div className="bg-surface-variant border border-outline-variant rounded-md px-4 py-3 text-on-surface text-sm mb-5 flex gap-2">
           <span><FiAlertTriangle /></span> {error}
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
         </div>
       )}
 
@@ -167,27 +129,18 @@ function CompleteProfileStage({ token }) {
 
         {/* Business Identity */}
         <section>
-<<<<<<< HEAD
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-primary text-white text-xs flex items-center justify-center">1</span>
-=======
           <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4 flex items-center gap-2">
             <span className="w-5 h-5 rounded-lg bg-primary text-white text-xs flex items-center justify-center">1</span>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             Business Identity
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { key: "storeName",         label: "Official Store Name",          placeholder: "e.g. Addis Book Centre PLC" },
+              { key: "storeName", label: "Official Store Name", placeholder: "e.g. Addis Book Centre PLC" },
               { key: "businessRegNumber", label: "Business Registration Number", placeholder: "From Ministry of Trade" },
-              { key: "tin",              label: "TIN Number",                   placeholder: "From ERCA" },
+              { key: "tin", label: "TIN Number", placeholder: "From ERCA" },
             ].map((f) => (
               <div key={f.key} className={f.key === "storeName" ? "sm:col-span-2" : ""}>
-<<<<<<< HEAD
-                <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-2">
-=======
                 <label className="block text-xs font-semibold text-on-surface uppercase tracking-wide mb-2">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                   {f.label}
                 </label>
                 <input
@@ -195,19 +148,10 @@ function CompleteProfileStage({ token }) {
                   value={form[f.key]}
                   onChange={(e) => setField(f.key, e.target.value)}
                   placeholder={f.placeholder}
-<<<<<<< HEAD
-                  className={`w-full px-4 py-3 rounded-xl border-2 text-sm bg-surface outline-none transition-colors ${
-                    fieldErrors[f.key] ? "border-red-400" : "border-gray-200 focus:border-primary"
-                  }`}
-                />
-                {fieldErrors[f.key] && <p className="text-red-500 text-xs mt-1">{fieldErrors[f.key]}</p>}
-=======
-                  className={`w-full px-4 py-3 rounded-md border-2 text-sm bg-surface outline-none transition-colors ${
-                    fieldErrors[f.key] ? "border-error" : "border-outline-variant focus:border-primary"
-                  }`}
+                  className={`w-full px-4 py-3 rounded-md border-2 text-sm bg-surface outline-none transition-colors ${fieldErrors[f.key] ? "border-error" : "border-outline-variant focus:border-primary"
+                    }`}
                 />
                 {fieldErrors[f.key] && <p className="text-error text-xs mt-1">{fieldErrors[f.key]}</p>}
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               </div>
             ))}
           </div>
@@ -215,141 +159,77 @@ function CompleteProfileStage({ token }) {
 
         {/* Location */}
         <section>
-<<<<<<< HEAD
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-primary text-white text-xs flex items-center justify-center">2</span>
-=======
           <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4 flex items-center gap-2">
             <span className="w-5 h-5 rounded-lg bg-primary text-white text-xs flex items-center justify-center">2</span>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             Business Location
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-<<<<<<< HEAD
-              <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-2">Region / Kilil</label>
-              <select
-                value={form.region}
-                onChange={(e) => setField("region", e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl border-2 text-sm bg-surface outline-none transition-colors ${
-                  fieldErrors.region ? "border-red-400" : "border-gray-200 focus:border-primary"
-=======
               <label className="block text-xs font-semibold text-on-surface uppercase tracking-wide mb-2">Region / Kilil</label>
               <select
                 value={form.region}
                 onChange={(e) => setField("region", e.target.value)}
-                className={`w-full px-4 py-3 rounded-md border-2 text-sm bg-surface outline-none transition-colors ${
-                  fieldErrors.region ? "border-error" : "border-outline-variant focus:border-primary"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
-                }`}
+                className={`w-full px-4 py-3 rounded-md border-2 text-sm bg-surface outline-none transition-colors ${fieldErrors.region ? "border-error" : "border-outline-variant focus:border-primary"
+                  }`}
               >
                 <option value="">Select region...</option>
                 {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
-<<<<<<< HEAD
-              {fieldErrors.region && <p className="text-red-500 text-xs mt-1">{fieldErrors.region}</p>}
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-2">City / Woreda</label>
-=======
               {fieldErrors.region && <p className="text-error text-xs mt-1">{fieldErrors.region}</p>}
             </div>
             <div>
               <label className="block text-xs font-semibold text-on-surface uppercase tracking-wide mb-2">City / Woreda</label>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               <input
                 type="text"
                 value={form.city}
                 onChange={(e) => setField("city", e.target.value)}
                 placeholder="e.g. Bole"
-<<<<<<< HEAD
-                className={`w-full px-4 py-3 rounded-xl border-2 text-sm bg-surface outline-none transition-colors ${
-                  fieldErrors.city ? "border-red-400" : "border-gray-200 focus:border-primary"
-                }`}
-              />
-              {fieldErrors.city && <p className="text-red-500 text-xs mt-1">{fieldErrors.city}</p>}
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-2">Specific Address</label>
-=======
-                className={`w-full px-4 py-3 rounded-md border-2 text-sm bg-surface outline-none transition-colors ${
-                  fieldErrors.city ? "border-error" : "border-outline-variant focus:border-primary"
-                }`}
+                className={`w-full px-4 py-3 rounded-md border-2 text-sm bg-surface outline-none transition-colors ${fieldErrors.city ? "border-error" : "border-outline-variant focus:border-primary"
+                  }`}
               />
               {fieldErrors.city && <p className="text-error text-xs mt-1">{fieldErrors.city}</p>}
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-on-surface uppercase tracking-wide mb-2">Specific Address</label>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               <input
                 type="text"
                 value={form.address}
                 onChange={(e) => setField("address", e.target.value)}
                 placeholder="Street, building, landmark..."
-<<<<<<< HEAD
-                className={`w-full px-4 py-3 rounded-xl border-2 text-sm bg-surface outline-none transition-colors ${
-                  fieldErrors.address ? "border-red-400" : "border-gray-200 focus:border-primary"
-                }`}
-              />
-              {fieldErrors.address && <p className="text-red-500 text-xs mt-1">{fieldErrors.address}</p>}
-=======
-                className={`w-full px-4 py-3 rounded-md border-2 text-sm bg-surface outline-none transition-colors ${
-                  fieldErrors.address ? "border-error" : "border-outline-variant focus:border-primary"
-                }`}
+                className={`w-full px-4 py-3 rounded-md border-2 text-sm bg-surface outline-none transition-colors ${fieldErrors.address ? "border-error" : "border-outline-variant focus:border-primary"
+                  }`}
               />
               {fieldErrors.address && <p className="text-error text-xs mt-1">{fieldErrors.address}</p>}
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             </div>
           </div>
         </section>
 
         {/* Banking */}
         <section>
-<<<<<<< HEAD
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-primary text-white text-xs flex items-center justify-center">3</span>
-=======
           <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4 flex items-center gap-2">
             <span className="w-5 h-5 rounded-lg bg-primary text-white text-xs flex items-center justify-center">3</span>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             Banking & Payment
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-<<<<<<< HEAD
-              <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-2">Bank Name</label>
-              <select
-                value={form.bankName}
-                onChange={(e) => setField("bankName", e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-=======
               <label className="block text-xs font-semibold text-on-surface uppercase tracking-wide mb-2">Bank Name</label>
               <select
                 value={form.bankName}
                 onChange={(e) => setField("bankName", e.target.value)}
                 className="w-full px-4 py-3 rounded-md border-2 border-outline-variant focus:border-primary text-sm bg-surface outline-none transition-colors"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               >
                 <option value="">Select bank...</option>
                 {BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
             </div>
             <div>
-<<<<<<< HEAD
-              <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-2">Bank Account Number</label>
-=======
               <label className="block text-xs font-semibold text-on-surface uppercase tracking-wide mb-2">Bank Account Number</label>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               <input
                 type="text"
                 value={form.bankAccount}
                 onChange={(e) => setField("bankAccount", e.target.value)}
                 placeholder="Your business account number"
-<<<<<<< HEAD
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-=======
                 className="w-full px-4 py-3 rounded-md border-2 border-outline-variant focus:border-primary text-sm bg-surface outline-none transition-colors"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               />
             </div>
           </div>
@@ -357,43 +237,25 @@ function CompleteProfileStage({ token }) {
 
         {/* Document Uploads */}
         <section>
-<<<<<<< HEAD
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-primary text-white text-xs flex items-center justify-center">4</span>
-=======
           <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4 flex items-center gap-2">
             <span className="w-5 h-5 rounded-lg bg-primary text-white text-xs flex items-center justify-center">4</span>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             Document Uploads
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { key: "ownerIdFile",        label: "Owner National ID / Passport", accept: "image/*,.pdf" },
-              { key: "businessLicenseFile", label: "Business License",             accept: "image/*,.pdf" },
+              { key: "ownerIdFile", label: "Owner National ID / Passport", accept: "image/*,.pdf" },
+              { key: "businessLicenseFile", label: "Business License", accept: "image/*,.pdf" },
             ].map((f) => (
               <div key={f.key}>
-<<<<<<< HEAD
-                <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-2">
-                  {f.label}
-                </label>
-                <label className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                  files[f.key]
-                    ? "border-green-400 bg-green-50"
-                    : fieldErrors[f.key]
-                    ? "border-red-400 bg-red-50"
-                    : "border-gray-300 bg-surface hover:border-primary hover:bg-primary/5"
-=======
                 <label className="block text-xs font-semibold text-on-surface uppercase tracking-wide mb-2">
                   {f.label}
                 </label>
-                <label className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-md cursor-pointer transition-colors ${
-                  files[f.key]
+                <label className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-md cursor-pointer transition-colors ${files[f.key]
                     ? "border-green-400 bg-green-50"
                     : fieldErrors[f.key]
-                    ? "border-error bg-surface-variant"
-                    : "border-outline-variant bg-surface hover:border-primary hover:bg-primary/5"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
-                }`}>
+                      ? "border-error bg-surface-variant"
+                      : "border-outline-variant bg-surface hover:border-primary hover:bg-primary/5"
+                  }`}>
                   <input
                     type="file"
                     accept={f.accept}
@@ -408,42 +270,24 @@ function CompleteProfileStage({ token }) {
                   />
                   {files[f.key] ? (
                     <div className="text-center px-3">
-<<<<<<< HEAD
-                      <p className="text-2xl mb-1">✅</p>
-                      <p className="text-xs font-semibold text-green-700 truncate max-w-full">
-                        {files[f.key].name}
-                      </p>
-                      <p className="text-xs text-green-600 mt-0.5">
-=======
                       <p className="text-2xl mb-1 flex justify-center"><FiCheckCircle /></p>
                       <p className="text-xs font-semibold text-green-700 truncate max-w-full">
                         {files[f.key].name}
                       </p>
                       <p className="text-xs text-primary mt-0.5">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                         {(files[f.key].size / 1024).toFixed(0)} KB
                       </p>
                     </div>
                   ) : (
                     <div className="text-center px-3">
-<<<<<<< HEAD
-                      <p className="text-2xl mb-1">📄</p>
-                      <p className="text-xs text-textMuted">Click to upload</p>
-                      <p className="text-xs text-textMuted mt-0.5">PDF or Image</p>
-=======
                       <p className="text-2xl mb-1 flex justify-center"><FiFileText /></p>
                       <p className="text-xs text-on-surface-variant">Click to upload</p>
                       <p className="text-xs text-on-surface-variant mt-0.5">PDF or Image</p>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                     </div>
                   )}
                 </label>
                 {fieldErrors[f.key] && (
-<<<<<<< HEAD
-                  <p className="text-red-500 text-xs mt-1">{fieldErrors[f.key]}</p>
-=======
                   <p className="text-error text-xs mt-1">{fieldErrors[f.key]}</p>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 )}
               </div>
             ))}
@@ -453,19 +297,11 @@ function CompleteProfileStage({ token }) {
         <button
           type="submit"
           disabled={loading}
-<<<<<<< HEAD
-          className="w-full bg-primary text-white rounded-full py-3.5 font-semibold text-sm hover:bg-red-600 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-=======
           className="w-full bg-primary text-white rounded-lg py-3.5 font-semibold text-sm hover:bg-primary-container transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-lg animate-spin" />
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               Submitting profile...
             </>
           ) : "Submit Store Profile →"}
@@ -482,11 +318,7 @@ export default function StoreCompleteProfilePage() {
   return (
     <div className="min-h-screen bg-surface flex">
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-[#1A1A2E] to-[#2d1b3d] flex-col items-center justify-center px-12 relative overflow-hidden">
-<<<<<<< HEAD
-        <div className="absolute w-96 h-96 rounded-full bg-primary/10 -top-24 -right-24 blur-3xl" />
-=======
         <div className="absolute w-96 h-96 rounded-lg bg-primary/10 -top-24 -right-24 blur-3xl" />
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
         <div className="relative z-10 text-center">
           <h1 className="font-display font-bold text-5xl text-white">
             read<span className="text-primary">books</span>
@@ -499,11 +331,7 @@ export default function StoreCompleteProfilePage() {
 
       <div className="w-full lg:w-[620px] bg-white flex flex-col justify-center px-8 lg:px-12 py-12 overflow-y-auto">
         <div className="lg:hidden mb-8">
-<<<<<<< HEAD
-          <span className="font-display font-bold text-2xl text-textMain">
-=======
           <span className="font-display font-bold text-2xl text-on-surface">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             read<span className="text-primary">books</span>
           </span>
         </div>

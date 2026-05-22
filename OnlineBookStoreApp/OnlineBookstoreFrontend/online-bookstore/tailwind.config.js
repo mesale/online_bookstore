@@ -7,19 +7,6 @@ export default {
   theme: {
     extend: {
       colors: {
-<<<<<<< HEAD
-        primary: "#E63946",       // red accent (from the "See The Book" buttons)
-        surface: "#F8F9FA",       // light gray background
-        card: "#FFFFFF",
-        textMain: "#1A1A2E",
-        textMuted: "#6B7280",
-        highlight: "#FFF3E0",     // warm yellow highlight (from featured card)
-      },
-      fontFamily: {
-        sans: ["'DM Sans'", "sans-serif"],
-        display: ["'Playfair Display'", "serif"],
-      },
-=======
         // Stitch Design System - Modern Literary Theme
         primary: "#041627",         // Library Blue - Authority and depth
         'primary-container': "#1a2b3c", // Lighter Library Blue for containers
@@ -57,7 +44,6 @@ export default {
         'elevation-2': "0 5px 10px rgba(4, 22, 39, 0.12)",
         'elevation-3': "0 8px 16px rgba(4, 22, 39, 0.15)",
       },
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
     },
   },
   plugins: [],

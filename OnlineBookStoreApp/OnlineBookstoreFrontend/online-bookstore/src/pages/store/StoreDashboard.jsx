@@ -3,23 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import api from "../../api/axiosInstance";
 import { unwrapItem, unwrapList } from "../../utils/apiHelpers";
-<<<<<<< HEAD
-import { getBookDocumentUrl } from "../../utils/book";
-
-function StatCard({ icon, label, value, sub, color = "bg-primary/10" }) {
-  return (
-    <div className="bg-card rounded-2xl p-5 shadow-sm flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center text-2xl flex-shrink-0`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-textMuted text-xs font-medium uppercase tracking-wide">{label}</p>
-        <p className="text-textMain font-bold text-xl mt-0.5">{value}</p>
-        {sub && <p className="text-textMuted text-xs mt-0.5">{sub}</p>}
-=======
 import { getBookDocumentUrl, getBookImageUrl } from "../../utils/book";
-import { 
-  FiPieChart, FiBook, FiBox, FiHome, FiUsers, FiTrendingUp, FiSettings, 
+import {
+  FiPieChart, FiBook, FiBox, FiHome, FiUsers, FiTrendingUp, FiSettings,
   FiGlobe, FiStar, FiMapPin, FiPhone, FiDollarSign, FiBriefcase, FiTrendingDown, FiUser,
   FiClock, FiCheck
 } from "react-icons/fi";
@@ -34,7 +20,6 @@ function StatCard({ icon, label, value, sub, color = "bg-primary text-on-primary
         <p className="text-secondary label-md uppercase tracking-wider">{label}</p>
         <p className="text-primary font-bold headline-sm mt-1">{value}</p>
         {sub && <p className="text-secondary body-md mt-1">{sub}</p>}
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
       </div>
     </div>
   );
@@ -42,34 +27,6 @@ function StatCard({ icon, label, value, sub, color = "bg-primary text-on-primary
 
 function StoreSidebar({ store, activeTab, setActiveTab, navigate }) {
   const NAV = [
-<<<<<<< HEAD
-    { id: "overview",   icon: "📊", label: "Overview"         },
-    { id: "branches",   icon: "🏪", label: "Branches"         },
-    { id: "books",      icon: "📚", label: "Books"            },
-    { id: "orders",     icon: "📦", label: "Orders"           },
-    { id: "earnings",   icon: "💰", label: "Earnings"         },
-    { id: "employees",  icon: "👥", label: "Employees"        },
-    { id: "settings",   icon: "⚙️",  label: "Settings"        },
-  ];
-
-  return (
-    <aside className="w-64 bg-card shadow-sm rounded-3xl p-4 flex flex-col gap-1 sticky top-20 self-start">
-      {/* Store identity */}
-      <div className="px-3 py-4 mb-2 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl">
-            🏪
-          </div>
-          <div className="min-w-0">
-            <p className="font-bold text-textMain text-sm truncate">
-              {store?.storeName || "My Store"}
-            </p>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-              store?.plan === "PREMIUM"
-                ? "bg-amber-100 text-amber-700"
-                : "bg-gray-100 text-textMuted"
-            }`}>
-=======
     { id: "overview", icon: <FiPieChart />, label: "Dashboard" },
     { id: "books", icon: <FiBook />, label: "Inventory" },
     { id: "orders", icon: <FiBox />, label: "Orders" },
@@ -95,24 +52,15 @@ function StoreSidebar({ store, activeTab, setActiveTab, navigate }) {
               ? "bg-primary text-on-primary border-primary"
               : "bg-surface-variant text-secondary border-outline-variant"
               }`}>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               {store?.plan || "FREE"} Plan
             </span>
           </div>
         </div>
         {/* Verification badge */}
-<<<<<<< HEAD
-        <div className={`mt-3 flex items-center gap-1.5 text-xs font-medium ${
-          store?.verificationStatus === "APPROVED"
-            ? "text-green-600" : "text-yellow-600"
-        }`}>
-          <span>{store?.verificationStatus === "APPROVED" ? "✓" : "⏳"}</span>
-=======
         <div className={`mt-4 flex items-center gap-2 label-md ${store?.verificationStatus === "APPROVED"
           ? "text-primary" : "text-secondary"
           }`}>
           <span className="flex items-center">{store?.verificationStatus === "APPROVED" ? <FiCheck /> : <FiClock />}</span>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
           <span>{store?.verificationStatus || "PENDING"}</span>
         </div>
       </div>
@@ -122,42 +70,23 @@ function StoreSidebar({ store, activeTab, setActiveTab, navigate }) {
         <button
           key={item.id}
           onClick={() => setActiveTab(item.id)}
-<<<<<<< HEAD
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
-            activeTab === item.id
-              ? "bg-primary text-white"
-              : "text-textMuted hover:bg-surface hover:text-textMain"
-          }`}
-        >
-          <span className="text-base">{item.icon}</span>
-=======
           className={`flex items-center gap-4 px-4 py-3 text-left transition-colors border-l-2 ${activeTab === item.id
             ? "border-primary bg-primary text-on-primary font-bold label-md"
             : "border-transparent text-secondary hover:bg-surface-variant hover:text-primary label-md"
             }`}
         >
           <span className="text-xl">{item.icon}</span>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
           {item.label}
         </button>
       ))}
 
       {/* Bottom — view store */}
-<<<<<<< HEAD
-      <div className="mt-auto pt-4 border-t border-gray-100">
-        <button
-          onClick={() => navigate("/")}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-textMuted hover:bg-surface hover:text-primary transition-colors"
-        >
-          <span>🌐</span> View Public Store
-=======
       <div className="mt-auto pt-6 border-t border-surface-variant">
         <button
           onClick={() => navigate("/")}
           className="w-full flex items-center gap-3 px-4 py-3 label-md text-secondary hover:bg-surface-variant hover:text-primary transition-colors border border-outline-variant hover:border-primary"
         >
           <span><FiGlobe /></span> View Public Store
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
         </button>
       </div>
     </aside>
@@ -166,42 +95,6 @@ function StoreSidebar({ store, activeTab, setActiveTab, navigate }) {
 
 function OverviewTab({ store, branches, stats }) {
   return (
-<<<<<<< HEAD
-    <div className="flex flex-col gap-6">
-      <h2 className="font-display font-bold text-textMain text-xl">Store Overview</h2>
-
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard icon="🏪" label="Branches"     value={branches.length}           color="bg-blue-50"   />
-        <StatCard icon="📚" label="Total Books"  value={stats?.totalBooks  || 0}   color="bg-purple-50" />
-        <StatCard icon="📦" label="Total Orders" value={stats?.totalOrders || 0}   color="bg-amber-50"  />
-        <StatCard icon="💰" label="Revenue"      value={`ETB ${(stats?.revenue || 0).toLocaleString()}`} color="bg-green-50" />
-      </div>
-
-      {/* Branches summary */}
-      <div className="bg-card rounded-2xl shadow-sm p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-bold text-textMain text-base">Branch Performance</h3>
-        </div>
-        {branches.length === 0 ? (
-          <p className="text-textMuted text-sm text-center py-8">No branches yet</p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {branches.map((branch, i) => (
-              <div key={branch.id} className="flex items-center gap-4 p-3 bg-surface rounded-xl">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                  {i + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-textMain truncate">{branch.branchName}</p>
-                  <p className="text-xs text-textMuted">{branch.city}, {branch.region}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-semibold text-textMain">
-                    ETB {(branch.revenue || 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-textMuted">{branch.orderCount || 0} orders</p>
-=======
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="display-sm text-primary mb-2">Dashboard</h2>
@@ -248,7 +141,6 @@ function OverviewTab({ store, branches, stats }) {
                     ETB {(branch.revenue || 0).toLocaleString()}
                   </p>
                   <p className="body-md text-secondary">{branch.orderCount || 0} orders</p>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 </div>
               </div>
             ))}
@@ -257,19 +149,6 @@ function OverviewTab({ store, branches, stats }) {
       </div>
 
       {/* Plan info */}
-<<<<<<< HEAD
-      <div className={`rounded-2xl p-5 flex items-center gap-4 ${
-        store?.plan === "PREMIUM"
-          ? "bg-amber-50 border-2 border-amber-200"
-          : "bg-surface border-2 border-gray-200"
-      }`}>
-        <span className="text-3xl">{store?.plan === "PREMIUM" ? "⭐" : "🆓"}</span>
-        <div className="flex-1">
-          <p className="font-bold text-textMain text-sm">
-            {store?.plan === "PREMIUM" ? "Premium Plan" : "Free Plan"}
-          </p>
-          <p className="text-xs text-textMuted mt-0.5">
-=======
       <div className={`p-8 flex items-center gap-6 border shadow-elevation-1 ${store?.plan === "PREMIUM"
         ? "bg-primary/5 border-primary"
         : "bg-surface-container-lowest border-outline-variant"
@@ -280,20 +159,14 @@ function OverviewTab({ store, branches, stats }) {
             {store?.plan === "PREMIUM" ? "Premium Plan" : "Free Plan"}
           </p>
           <p className="body-lg text-secondary mt-2">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             {store?.plan === "PREMIUM"
               ? "2% commission per sale · Priority support · Advanced analytics"
               : "5% commission per sale · Standard support · Basic analytics"}
           </p>
         </div>
         {store?.plan !== "PREMIUM" && (
-<<<<<<< HEAD
-          <button className="bg-amber-400 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-amber-500 transition-colors whitespace-nowrap">
-            Upgrade →
-=======
           <button className="btn-primary px-8 py-3 label-md whitespace-nowrap">
             Upgrade to Premium
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
           </button>
         )}
       </div>
@@ -301,11 +174,7 @@ function OverviewTab({ store, branches, stats }) {
   );
 }
 
-<<<<<<< HEAD
-function BranchesTab({ storeId, branches, setBranches }) {
-=======
 function BranchesTab({ branches, setBranches }) {
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
   const [showAdd, setShowAdd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -313,13 +182,8 @@ function BranchesTab({ branches, setBranches }) {
   });
 
   const REGIONS = [
-<<<<<<< HEAD
-    "Addis Ababa","Oromia","Amhara","Tigray",
-    "SNNPR","Somali","Afar","Benishangul-Gumuz","Gambela","Harari","Dire Dawa",
-=======
     "Addis Ababa", "Oromia", "Amhara", "Tigray",
     "SNNPR", "Somali", "Afar", "Benishangul-Gumuz", "Gambela", "Harari", "Dire Dawa",
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
   ];
 
   const handleAdd = async (e) => {
@@ -331,32 +195,19 @@ function BranchesTab({ branches, setBranches }) {
       setBranches((prev) => [...prev, newBranch]);
       setShowAdd(false);
       setForm({ branchName: "", region: "", city: "", address: "", phone: "" });
-<<<<<<< HEAD
-    } catch {}
-=======
     } catch (err) {
       console.error("Failed to add branch", err);
     }
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
     finally { setLoading(false); }
   };
 
   return (
-<<<<<<< HEAD
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display font-bold text-textMain text-xl">Branches</h2>
-        <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-red-600 transition-colors"
-=======
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between border-b border-surface-variant pb-6">
         <h2 className="display-sm text-primary">Branches</h2>
         <button
           onClick={() => setShowAdd(!showAdd)}
           className="btn-primary px-6 py-3 label-md"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
         >
           + Add Branch
         </button>
@@ -364,19 +215,6 @@ function BranchesTab({ branches, setBranches }) {
 
       {/* Add branch form */}
       {showAdd && (
-<<<<<<< HEAD
-        <form onSubmit={handleAdd} className="bg-card rounded-2xl shadow-sm p-5 flex flex-col gap-4 border-2 border-primary/20">
-          <h3 className="font-semibold text-textMain text-base">New Branch</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { key: "branchName", label: "Branch Name",    placeholder: "e.g. Bole Branch" },
-              { key: "phone",      label: "Phone",          placeholder: "+251 ..." },
-              { key: "city",       label: "City / Woreda",  placeholder: "e.g. Bole" },
-              { key: "address",    label: "Specific Address", placeholder: "Street, building..." },
-            ].map((f) => (
-              <div key={f.key}>
-                <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1.5">
-=======
         <form onSubmit={handleAdd} className="bg-surface-container-lowest border border-surface-variant shadow-elevation-1 p-8 flex flex-col gap-6">
           <h3 className="headline-md text-primary">New Branch details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -388,7 +226,6 @@ function BranchesTab({ branches, setBranches }) {
             ].map((f) => (
               <div key={f.key}>
                 <label className="block label-md text-secondary uppercase tracking-wider mb-2">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                   {f.label}
                 </label>
                 <input
@@ -396,45 +233,24 @@ function BranchesTab({ branches, setBranches }) {
                   value={form[f.key]}
                   onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                   placeholder={f.placeholder}
-<<<<<<< HEAD
-                  className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-=======
                   className="w-full px-4 py-3 bg-surface border border-outline-variant focus:border-primary body-md text-primary outline-none transition-colors"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 />
               </div>
             ))}
             <div>
-<<<<<<< HEAD
-              <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1.5">
-=======
               <label className="block label-md text-secondary uppercase tracking-wider mb-2">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 Region
               </label>
               <select
                 value={form.region}
                 onChange={(e) => setForm({ ...form, region: e.target.value })}
-<<<<<<< HEAD
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-=======
                 className="w-full px-4 py-3 bg-surface border border-outline-variant focus:border-primary body-md text-primary outline-none transition-colors"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               >
                 <option value="">Select region...</option>
                 {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
           </div>
-<<<<<<< HEAD
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-red-600 transition-colors disabled:opacity-60"
-            >
-              {loading ? "Adding..." : "Add Branch"}
-=======
           <div className="flex gap-4 mt-4">
             <button
               type="submit"
@@ -442,16 +258,11 @@ function BranchesTab({ branches, setBranches }) {
               className="btn-primary px-8 py-3 label-md disabled:opacity-60"
             >
               {loading ? "Adding..." : "Save Branch"}
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             </button>
             <button
               type="button"
               onClick={() => setShowAdd(false)}
-<<<<<<< HEAD
-              className="border-2 border-gray-200 text-textMuted px-6 py-2.5 rounded-full text-sm font-semibold hover:border-primary hover:text-primary transition-colors"
-=======
               className="btn-secondary px-8 py-3 label-md"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             >
               Cancel
             </button>
@@ -461,40 +272,6 @@ function BranchesTab({ branches, setBranches }) {
 
       {/* Branch cards */}
       {branches.length === 0 ? (
-<<<<<<< HEAD
-        <div className="bg-card rounded-2xl p-12 text-center shadow-sm">
-          <p className="text-4xl mb-3">🏪</p>
-          <p className="font-semibold text-textMain">No branches yet</p>
-          <p className="text-textMuted text-sm mt-1">Add your first branch to start listing books</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {branches.map((branch) => (
-            <div key={branch.id} className="bg-card rounded-2xl shadow-sm p-5 flex flex-col gap-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-bold text-textMain text-base">{branch.branchName}</p>
-                  <p className="text-xs text-textMuted mt-0.5">
-                    {branch.city}, {branch.region}
-                  </p>
-                </div>
-                <span className="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
-                  Active
-                </span>
-              </div>
-              <div className="flex flex-col gap-1 text-xs text-textMuted">
-                <p>📍 {branch.address}</p>
-                <p>📞 {branch.phone}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
-                <div className="text-center">
-                  <p className="font-bold text-textMain text-base">{branch.bookCount || 0}</p>
-                  <p className="text-xs text-textMuted">Books</p>
-                </div>
-                <div className="text-center">
-                  <p className="font-bold text-textMain text-base">{branch.orderCount || 0}</p>
-                  <p className="text-xs text-textMuted">Orders</p>
-=======
         <div className="bg-surface-container-lowest border border-surface-variant p-16 text-center shadow-elevation-1">
           <p className="text-5xl mb-6 opacity-80 flex justify-center"><FiHome /></p>
           <p className="headline-md text-primary">No branches yet</p>
@@ -527,7 +304,6 @@ function BranchesTab({ branches, setBranches }) {
                 <div className="bg-surface p-4 border border-outline-variant text-center">
                   <p className="headline-md text-primary">{branch.orderCount || 0}</p>
                   <p className="label-md text-secondary uppercase tracking-wider">Orders</p>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 </div>
               </div>
             </div>
@@ -538,18 +314,6 @@ function BranchesTab({ branches, setBranches }) {
   );
 }
 
-<<<<<<< HEAD
-function BooksTab({ storeId, branches }) {
-  const navigate = useNavigate();
-  const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [addLoading, setAddLoading] = useState(false);
-  const [files, setFiles] = useState({
-    imageFile: null,
-    documentFile: null,
-  });
-=======
 function BooksTab({ branches }) {
   const [booksByBranch, setBooksByBranch] = useState([]);  // [{branch, books}]
   const [filterStatus, setFilterStatus] = useState("ALL");
@@ -557,35 +321,18 @@ function BooksTab({ branches }) {
   const [showAdd, setShowAdd] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [files, setFiles] = useState({ imageFile: null, documentFile: null });
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
   const [form, setForm] = useState({
     title: "", author: "", category: "", price: "",
     condition: "NEW", branchId: "",
   });
 
   const CATEGORIES = [
-<<<<<<< HEAD
-    "Technology","Fiction","Business","Science","Philosophy","Biography","Religion","Education","Other"
-=======
     "Technology", "Fiction", "Business", "Science", "Philosophy", "Biography", "Religion", "Education", "Other"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
   ];
 
   useEffect(() => {
     if (!branches.length) return;
     Promise.all(
-<<<<<<< HEAD
-      branches.map((b) =>
-        api.get(`/books/store/my-branch`)
-          .then((r) => unwrapList(r))
-          .catch(() => [])
-      )
-    ).then((results) => {
-      setBooks(results.flat());
-    }).finally(() => setLoading(false));
-  }, [branches]);
-
-=======
       branches.map((branch) =>
         api.get(`/books/store/branch/${branch.id}`)
           .then((r) => ({ branch, books: unwrapList(r) }))
@@ -599,36 +346,11 @@ function BooksTab({ branches }) {
   // Helper: total book count across all branches
   const totalBooks = booksByBranch.reduce((sum, g) => sum + g.books.length, 0);
 
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
   const handleAdd = async (e) => {
     e.preventDefault();
     setAddLoading(true);
     try {
       const formData = new FormData();
-<<<<<<< HEAD
-      const bookData = {
-        ...form,
-        price: parseFloat(form.price),
-      };
-
-      formData.append(
-        "data",
-        new Blob([JSON.stringify(bookData)], { type: "application/json" })
-      );
-      if (files.imageFile) formData.append("image", files.imageFile);
-      if (files.documentFile) formData.append("documentFile", files.documentFile);
-
-      const res = await api.post("/books/store", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const newBook = unwrapItem(res);
-      setBooks((prev) => [newBook, ...prev]);
-      setShowAdd(false);
-      setForm({ title: "", author: "", category: "", price: "", condition: "NEW", branchId: "" });
-      setFiles({ imageFile: null, documentFile: null });
-    } catch {}
-    finally { setAddLoading(false); }
-=======
       const bookData = { ...form, price: parseFloat(form.price) };
       formData.append("data", new Blob([JSON.stringify(bookData)], { type: "application/json" }));
       if (files.imageFile) formData.append("image", files.imageFile);
@@ -649,7 +371,6 @@ function BooksTab({ branches }) {
     } catch (err) {
       console.error("Failed to add book", err);
     } finally { setAddLoading(false); }
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
   };
 
   const handleCancelAdd = () => {
@@ -661,22 +382,6 @@ function BooksTab({ branches }) {
     if (!confirm("Delete this book?")) return;
     try {
       await api.delete(`/books/${bookId}`);
-<<<<<<< HEAD
-      setBooks((prev) => prev.filter((b) => b.id !== bookId));
-    } catch {}
-  };
-
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display font-bold text-textMain text-xl">Books</h2>
-        <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-red-600 transition-colors"
-        >
-          + Add Book
-        </button>
-=======
       setBooksByBranch((prev) =>
         prev.map((g) => ({ ...g, books: g.books.filter((b) => b.id !== bookId) }))
       );
@@ -741,23 +446,10 @@ function BooksTab({ branches }) {
             <option value="REJECTED">Rejected</option>
           </select>
         </div>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
       </div>
 
       {/* Add book form */}
       {showAdd && (
-<<<<<<< HEAD
-        <form onSubmit={handleAdd} className="bg-card rounded-2xl shadow-sm p-5 flex flex-col gap-4 border-2 border-primary/20">
-          <h3 className="font-semibold text-textMain">New Book</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { key: "title",  label: "Title",  placeholder: "Book title" },
-              { key: "author", label: "Author", placeholder: "Author name" },
-              { key: "price",  label: "Price (ETB)", placeholder: "e.g. 350", type: "number" },
-            ].map((f) => (
-              <div key={f.key}>
-                <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1.5">
-=======
         <form onSubmit={handleAdd} className="bg-surface-container-lowest border border-surface-variant shadow-elevation-1 p-8 flex flex-col gap-6">
           <h3 className="headline-md text-primary">New Title Details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -768,7 +460,6 @@ function BooksTab({ branches }) {
             ].map((f) => (
               <div key={f.key}>
                 <label className="block label-md text-secondary uppercase tracking-wider mb-2">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                   {f.label}
                 </label>
                 <input
@@ -776,32 +467,20 @@ function BooksTab({ branches }) {
                   value={form[f.key]}
                   onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                   placeholder={f.placeholder}
-<<<<<<< HEAD
-                  className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-=======
                   className="w-full px-4 py-3 bg-surface border border-outline-variant focus:border-primary body-md text-primary outline-none transition-colors"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 />
               </div>
             ))}
 
             {/* Category */}
             <div>
-<<<<<<< HEAD
-              <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1.5">
-=======
               <label className="block label-md text-secondary uppercase tracking-wider mb-2">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 Category
               </label>
               <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
-<<<<<<< HEAD
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-=======
                 className="appearance-auto w-full px-4 py-3 bg-surface border border-outline-variant focus:border-primary body-md text-primary outline-none transition-colors"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               >
                 <option value="">Select category...</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -810,48 +489,12 @@ function BooksTab({ branches }) {
 
             {/* Condition */}
             <div>
-<<<<<<< HEAD
-              <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1.5">
-=======
               <label className="block label-md text-secondary uppercase tracking-wider mb-2">
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 Condition
               </label>
               <select
                 value={form.condition}
                 onChange={(e) => setForm({ ...form, condition: e.target.value })}
-<<<<<<< HEAD
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-              >
-                <option value="NEW">New</option>
-                <option value="USED">Used</option>
-              </select>
-            </div>
-
-            {/* Branch */}
-            <div>
-              <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1.5">
-                Branch
-              </label>
-              <select
-                value={form.branchId}
-                onChange={(e) => setForm({ ...form, branchId: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-              >
-                <option value="">Select branch...</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>{b.branchName}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              {
-                key: "imageFile",
-                label: "Book Cover",
-=======
                 className="appearance-auto w-full px-4 py-3 bg-surface border border-outline-variant focus:border-primary body-md text-primary outline-none transition-colors"
               >
                 <option value="NEW">New</option>
@@ -869,35 +512,18 @@ function BooksTab({ branches }) {
               {
                 key: "imageFile",
                 label: "Cover Art",
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 accept: "image/*",
                 hint: "Upload a JPG, PNG, or WEBP cover image",
               },
               {
                 key: "documentFile",
-<<<<<<< HEAD
-                label: "Book Document",
-=======
                 label: "Manuscript (PDF/Doc)",
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 accept: ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 hint: "Upload the book PDF or document file",
               },
             ].map((f) => (
               <label
                 key={f.key}
-<<<<<<< HEAD
-                className="border-2 border-dashed border-gray-200 rounded-2xl p-4 bg-surface hover:border-primary/60 transition-colors cursor-pointer"
-              >
-                <span className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1">
-                  {f.label}
-                </span>
-                <span className="block text-xs text-textMuted mb-3">
-                  {files[f.key] ? files[f.key].name : f.hint}
-                </span>
-                <span className="inline-flex items-center justify-center bg-card border-2 border-gray-200 text-textMuted px-4 py-2 rounded-full text-xs font-semibold">
-                  {files[f.key] ? "Change file" : "Choose file"}
-=======
                 className="border border-dashed border-outline-variant bg-surface hover:border-primary p-6 transition-colors cursor-pointer text-center"
               >
                 <span className="block label-md text-primary uppercase tracking-wider mb-2">
@@ -908,7 +534,6 @@ function BooksTab({ branches }) {
                 </span>
                 <span className="btn-secondary px-6 py-2 label-md inline-block">
                   {files[f.key] ? "Change File" : "Choose File"}
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
                 </span>
                 <input
                   type="file"
@@ -923,15 +548,6 @@ function BooksTab({ branches }) {
             ))}
           </div>
 
-<<<<<<< HEAD
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={addLoading}
-              className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-red-600 transition-colors disabled:opacity-60"
-            >
-              {addLoading ? "Adding..." : "Add Book"}
-=======
           <div className="flex gap-4 mt-4 border-t border-surface-variant pt-6">
             <button
               type="submit"
@@ -939,16 +555,11 @@ function BooksTab({ branches }) {
               className="btn-primary px-8 py-3 label-md disabled:opacity-60"
             >
               {addLoading ? "Saving..." : "Save Title"}
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             </button>
             <button
               type="button"
               onClick={handleCancelAdd}
-<<<<<<< HEAD
-              className="border-2 border-gray-200 text-textMuted px-6 py-2.5 rounded-full text-sm font-semibold hover:border-primary hover:text-primary transition-colors"
-=======
               className="btn-secondary px-8 py-3 label-md"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             >
               Cancel
             </button>
@@ -956,84 +567,6 @@ function BooksTab({ branches }) {
         </form>
       )}
 
-<<<<<<< HEAD
-      {/* Books table */}
-      {loading ? (
-        <div className="flex flex-col gap-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-card rounded-2xl h-16 animate-pulse" />
-          ))}
-        </div>
-      ) : books.length === 0 ? (
-        <div className="bg-card rounded-2xl p-12 text-center shadow-sm">
-          <p className="text-4xl mb-3">📚</p>
-          <p className="font-semibold text-textMain">No books listed yet</p>
-          <p className="text-textMuted text-sm mt-1">Add your first book to start selling</p>
-        </div>
-      ) : (
-        <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-surface">
-              <tr>
-                {["Title", "Author", "Category", "Price", "Condition", "Document", "Status", ""].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-textMuted uppercase tracking-wide">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {books.map((book) => (
-                <tr key={book.id} className="hover:bg-surface/50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-textMain">{book.title}</td>
-                  <td className="px-4 py-3 text-textMuted">{book.author}</td>
-                  <td className="px-4 py-3 text-textMuted">{book.category}</td>
-                  <td className="px-4 py-3 font-semibold text-primary">ETB {book.price}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      book.condition === "NEW"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}>
-                      {book.condition}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {getBookDocumentUrl(book) ? (
-                      <a
-                        href={getBookDocumentUrl(book)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-semibold text-primary hover:underline"
-                      >
-                        View
-                      </a>
-                    ) : (
-                      <span className="text-xs text-textMuted">None</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      book.approved
-                        ? "bg-green-100 text-green-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}>
-                      {book.approved ? "Approved" : "Pending"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleDelete(book.id)}
-                      className="text-red-400 hover:text-red-600 transition-colors text-xs font-semibold"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-=======
       {/* Books grouped by branch */}
       {loading ? (
         <div className="flex flex-col gap-4">
@@ -1153,29 +686,12 @@ function BooksTab({ branches }) {
               )}
             </div>
           ))}
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
         </div>
       )}
     </div>
   );
 }
 
-<<<<<<< HEAD
-function EarningsTab({ storeId, store }) {
-  const commission = store?.plan === "PREMIUM" ? 2 : 5;
-  return (
-    <div className="flex flex-col gap-5">
-      <h2 className="font-display font-bold text-textMain text-xl">Earnings</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon="💰" label="Total Revenue"    value="ETB 0"  color="bg-green-50"  />
-        <StatCard icon="🏦" label="Total Payouts"    value="ETB 0"  color="bg-blue-50"   />
-        <StatCard icon="📉" label="Commission Rate"  value={`${commission}%`} color="bg-red-50" sub={`${store?.plan || "FREE"} plan`} />
-      </div>
-      <div className="bg-card rounded-2xl shadow-sm p-8 text-center">
-        <p className="text-4xl mb-3">📊</p>
-        <p className="font-semibold text-textMain">Earnings data will appear here</p>
-        <p className="text-textMuted text-sm mt-1">Once you receive orders, your revenue breakdown will show here</p>
-=======
 function EarningsTab({ store }) {
   const commission = store?.plan === "PREMIUM" ? 2 : 5;
   return (
@@ -1190,18 +706,13 @@ function EarningsTab({ store }) {
         <p className="text-5xl mb-6 opacity-80 flex justify-center"><FiPieChart /></p>
         <p className="headline-md text-primary">Earnings log unavailable</p>
         <p className="body-lg text-secondary mt-2">Once you receive orders, your revenue breakdown will display here.</p>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
       </div>
     </div>
   );
 }
 
 function EmployeesTab({ storeId, branches }) {
-<<<<<<< HEAD
-  const [employees, setEmployees] = useState([]);
-=======
   const [employeesByBranch, setEmployeesByBranch] = useState([]);
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
   const [loading, setLoading] = useState(true);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -1211,17 +722,6 @@ function EmployeesTab({ storeId, branches }) {
     role: "WORKER",
     branchId: "",
   });
-<<<<<<< HEAD
-
-  useEffect(() => {
-    if (!storeId) return;
-
-    api.get(`/stores/${storeId}/employees`)
-      .then((res) => setEmployees(unwrapList(res)))
-      .catch(() => setEmployees([]))
-      .finally(() => setLoading(false));
-  }, [storeId]);
-=======
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showInviteForBranchId, setShowInviteForBranchId] = useState(null);
 
@@ -1242,7 +742,6 @@ function EmployeesTab({ storeId, branches }) {
       setEmployeesByBranch(results);
     }).finally(() => setLoading(false));
   }, [branches]);
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -1269,13 +768,9 @@ function EmployeesTab({ storeId, branches }) {
       const invited = unwrapItem(res);
 
       if (invited?.id || invited?.email) {
-<<<<<<< HEAD
-        setEmployees((prev) => [invited, ...prev]);
-=======
         setEmployeesByBranch((prev) =>
           prev.map(g => g.branch.id === form.branchId ? { ...g, employees: [invited, ...g.employees] } : g)
         );
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
       }
 
       setMessage(`Invitation sent to ${payload.email}`);
@@ -1288,123 +783,6 @@ function EmployeesTab({ storeId, branches }) {
   };
 
   return (
-<<<<<<< HEAD
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="font-display font-bold text-textMain text-xl">Employees</h2>
-        <p className="text-textMuted text-sm mt-1">Invite managers and staff using their email address.</p>
-      </div>
-
-      <form onSubmit={handleInvite} className="bg-card rounded-2xl shadow-sm p-5 flex flex-col gap-4">
-        <h3 className="font-semibold text-textMain text-base">Invite Employee</h3>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1.5">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="employee@example.com"
-              className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1.5">
-              Role
-            </label>
-            <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-            >
-              <option value="WORKER">Worker</option>
-              <option value="MANAGER">Manager</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-textMain uppercase tracking-wide mb-1.5">
-              Branch
-            </label>
-            <select
-              value={form.branchId}
-              onChange={(e) => setForm({ ...form, branchId: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary text-sm bg-surface outline-none transition-colors"
-            >
-              <option value="">Select branch...</option>
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>{branch.branchName}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {message && <p className="text-sm font-medium text-green-600">{message}</p>}
-        {error && <p className="text-sm font-medium text-red-500">{error}</p>}
-
-        <div>
-          <button
-            type="submit"
-            disabled={inviteLoading}
-            className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-red-600 transition-colors disabled:opacity-60"
-          >
-            {inviteLoading ? "Sending..." : "Send Invite"}
-          </button>
-        </div>
-      </form>
-
-      <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-textMain text-base">Team Members</h3>
-        </div>
-
-        {loading ? (
-          <div className="p-5 flex flex-col gap-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-12 bg-surface rounded-xl animate-pulse" />
-            ))}
-          </div>
-        ) : employees.length === 0 ? (
-          <div className="p-10 text-center">
-            <p className="text-4xl mb-3">👥</p>
-            <p className="font-semibold text-textMain">No employees yet</p>
-            <p className="text-textMuted text-sm mt-1">Invited employees will appear here.</p>
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-surface">
-              <tr>
-                {["Email", "Role", "Branch", "Status"].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-textMuted uppercase tracking-wide">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {employees.map((employee) => (
-                <tr key={employee.id || employee.email} className="hover:bg-surface/50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-textMain">{employee.email}</td>
-                  <td className="px-4 py-3 text-textMuted">{employee.role || "Staff"}</td>
-                  <td className="px-4 py-3 text-textMuted">
-                    {employee.branchName || branches.find((branch) => branch.id === employee.branchId)?.branchName || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                      {employee.status || "Invited"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-=======
     <div className="flex flex-col gap-8">
       <div className="border-b border-surface-variant pb-6">
         <h2 className="display-sm text-primary">Store Personnel</h2>
@@ -1996,7 +1374,6 @@ function OrdersTab({ branches }) {
           onClose={() => setDrawerOrderId(null)}
         />
       )}
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
     </div>
   );
 }
@@ -2024,15 +1401,6 @@ export default function StoreDashboard() {
         // Fetch branches
         api.get(`/stores/me/branch`)
           .then((r) => setBranches(unwrapList(r)))
-<<<<<<< HEAD
-          .catch(() => {});
-        // Fetch stats
-        api.get(`/stores/${s.id}/stats`)
-          .then((r) => setStats(unwrapItem(r)))
-          .catch(() => {});
-      })
-      .catch(() => {})
-=======
           .catch(() => { });
         // Fetch stats
         api.get(`/stores/${s.id}/stats`)
@@ -2040,62 +1408,21 @@ export default function StoreDashboard() {
           .catch(() => { });
       })
       .catch(() => { })
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
-<<<<<<< HEAD
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 text-textMuted">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-medium">Loading your store...</p>
-=======
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-6 text-primary">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           <p className="headline-md">Loading your library...</p>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
         </div>
       </div>
     );
   }
 
   const TABS = {
-<<<<<<< HEAD
-    overview:  <OverviewTab store={store} branches={branches} stats={stats} />,
-    branches:  <BranchesTab storeId={store?.id} branches={branches} setBranches={setBranches} />,
-    books:     <BooksTab storeId={store?.id} branches={branches} />,
-    earnings:  <EarningsTab storeId={store?.id} store={store} />,
-    orders:    (
-      <div className="bg-card rounded-2xl p-12 text-center shadow-sm">
-        <p className="text-4xl mb-3">📦</p>
-        <p className="font-semibold text-textMain">Orders for your branches</p>
-        <p className="text-textMuted text-sm mt-1">Coming in the next step</p>
-      </div>
-    ),
-    employees: <EmployeesTab storeId={store?.id} branches={branches} />,
-    settings: (
-      <div className="bg-card rounded-2xl shadow-sm p-6">
-        <h2 className="font-display font-bold text-textMain text-xl mb-6">Store Settings</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {[
-            { label: "Store Name",      value: store?.storeName },
-            { label: "Email",           value: store?.email },
-            { label: "Phone",           value: store?.phone },
-            { label: "Region",          value: store?.region },
-            { label: "City",            value: store?.city },
-            { label: "Plan",            value: store?.plan },
-            { label: "TIN",             value: store?.tin },
-            { label: "Reg. Number",     value: store?.businessRegNumber },
-            { label: "Bank",            value: store?.bankName },
-            { label: "Verification",    value: store?.verificationStatus },
-          ].map((item) => (
-            <div key={item.label}>
-              <p className="text-xs font-semibold text-textMuted uppercase tracking-wide">{item.label}</p>
-              <p className="text-sm font-medium text-textMain mt-1">{item.value || "—"}</p>
-=======
     overview: <OverviewTab store={store} branches={branches} stats={stats} />,
     branches: <BranchesTab branches={branches} setBranches={setBranches} />,
     books: <BooksTab branches={branches} />,
@@ -2121,7 +1448,6 @@ export default function StoreDashboard() {
             <div key={item.label} className="border-b border-outline-variant/30 pb-2">
               <p className="label-md text-secondary uppercase tracking-wider">{item.label}</p>
               <p className="headline-sm text-primary mt-2">{item.value || "—"}</p>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
             </div>
           ))}
         </div>
@@ -2130,23 +1456,6 @@ export default function StoreDashboard() {
   };
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen bg-surface">
-      {/* Top bar */}
-      <div className="bg-card shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <button
-            onClick={() => navigate("/")}
-            className="font-display font-bold text-xl text-textMain"
-          >
-            read<span className="text-primary">books</span>
-          </button>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-textMuted hidden sm:block">{user?.email}</span>
-            <img
-              src={`https://i.pravatar.cc/32?u=${user?.email}`}
-              className="w-8 h-8 rounded-full border-2 border-primary"
-=======
     <div className="min-h-screen bg-background text-on-background font-body-md antialiased pt-24 pb-16">
       {/* Top bar using a style similar to Navbar.jsx */}
       <header className="fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md bg-background/80 border-b border-surface-variant">
@@ -2162,23 +1471,10 @@ export default function StoreDashboard() {
             <img
               src={`https://i.pravatar.cc/40?u=${user?.email}`}
               className="w-10 h-10 rounded-full border border-outline-variant"
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
               alt=""
             />
           </div>
         </div>
-<<<<<<< HEAD
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-8 flex gap-6">
-        {/* Sidebar */}
-        <StoreSidebar
-          store={store}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          navigate={navigate}
-        />
-=======
       </header>
 
       <div className="max-w-7xl mx-auto px-8 py-8 flex flex-col lg:flex-row gap-12 w-full">
@@ -2191,7 +1487,6 @@ export default function StoreDashboard() {
             navigate={navigate}
           />
         </div>
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
 
         {/* Main content */}
         <main className="flex-1 min-w-0">

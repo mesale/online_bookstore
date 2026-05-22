@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-<<<<<<< HEAD
-=======
 import { useNavigate, useLocation } from "react-router-dom";
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
 import keycloak from "../auth/keycloak";
 import { AuthContext } from "./authContext";
 
@@ -22,8 +19,6 @@ function initKeycloak() {
   return keycloakInitPromise;
 }
 
-<<<<<<< HEAD
-=======
 // Helper to map role to dashboard path
 export const getDashboardPath = (roles) => {
   if (roles.includes("ROLE_ADMIN")) return "/admin";
@@ -33,14 +28,11 @@ export const getDashboardPath = (roles) => {
   return "/";
 };
 
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const refreshIntervalRef = useRef(null);
-<<<<<<< HEAD
-=======
   const hasRedirectedRef = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,7 +47,6 @@ export function AuthProvider({ children }) {
       }
     }
   }, [user, loading]);
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
 
   useEffect(() => {
     let mounted = true;
@@ -145,8 +136,5 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-<<<<<<< HEAD
-=======
 
 
->>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
