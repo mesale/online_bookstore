@@ -62,6 +62,13 @@ public class BranchService {
 
     }
 
+    public BranchResponse getBranchById(UUID branchId){
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
+
+        return toBranchResponse(branch);
+    }
+
     public boolean branchExists(UUID branchId, UUID storeId){
         return branchRepository.existsByIdAndStoreId(branchId, storeId);
     }

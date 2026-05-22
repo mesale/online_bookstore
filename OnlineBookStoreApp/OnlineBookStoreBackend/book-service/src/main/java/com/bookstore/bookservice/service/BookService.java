@@ -63,11 +63,11 @@ public class BookService {
 
     }
 
-    public BookResponse createBookAsOwner(String keycloakId, UUID storeId,
+    public BookResponse createBookAsOwner(String keycloakId, UUID storeId, UUID branchId,
                                           CreateBookRequest request, MultipartFile image){
         Book book = Book.builder()
                 .createdBy(storeId)
-                .branchId(storeId)
+                .branchId(branchId)
                 .storeId(storeId)
                 .title(request.title())
                 .author(request.author())
@@ -102,6 +102,45 @@ public class BookService {
         return toBookResponse(bookRepository.save(book));
 
     }
+
+    public BookResponse createBookForBranch(UUID storeId, UUID branchId,
+                                            CreateBookRequest request, MultipartFile image){
+        Book book = Book.builder()
+                .createdBy(storeId)
+                .branchId(branchId)
+                .storeId(storeId)
+                .title(request.title())
+                .author(request.author())
+                .description(request.description())
+                .category(request.category())
+                .price(request.price())
+                .condition(request.condition())
+                .approved(true) // Store Admin uploads are pre-approved
+                .build();
+
+        if (image != null && !image.isEmpty()){
+            String objectName = "books/" + UUID.randomUUID() + "/"
+                    + image.getOriginalFilename();
+            UploadResult upload =  minioService.uploadImage(image, objectName);
+
+            Document document = Document.builder()
+                    .documentType(Document.DocumentType.BOOK_IMAGE)
+                    .fileName(upload.fileName())
+                    .contentType(upload.contentType())
+                    .fileSize(upload.size())
+                    .objectKey(upload.objectKey())
+                    .bucketName(upload.bucketName())
+                    .uploadedBy(storeId)
+                    .isPrimary(true)
+                    .build();
+
+            document.setBook(book);
+            book.setDocuments(new ArrayList<>(List.of(document)));
+        }
+
+        return toBookResponse(bookRepository.save(book));
+    }
+
 
     public BookResponse updateBookAsOwner(String keycloakId, UUID bookId, UUID storeId,
                                           UpdateBookRequest request, MultipartFile image){

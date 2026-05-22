@@ -212,6 +212,15 @@ public class OrderService {
 
     }
 
+    public StoreOrderResponse getStoreOrder(UUID orderId, UUID storeId) {
+
+        Order order = orderRepository.findByIdAndStoreId(orderId, storeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        return toStoreOrderResponse(order);
+
+    }
+
     private String generatePin() {
         int pin = (int) (Math.random() * 900000) + 100000;
         return String.valueOf(pin);
@@ -220,10 +229,10 @@ public class OrderService {
     private OrderResponse toOrderResponse(Order order) {
         List<OrderItemResponse> itemResponses = order.getItems().stream()
                 .map(item -> new OrderItemResponse(
-                        item.getId(),
-                        item.getBookId(),
-                        item.getQuantity(),
-                        item.getPrice()
+                            item.getId(),
+                            item.getBookId(),
+                            item.getQuantity(),
+                            item.getPrice()
                 ))
                 .toList();
 
@@ -241,6 +250,30 @@ public class OrderService {
                         ? order.getDeliveryPin() : null,
                 order.getDeliveryPinUsed(),
                 order.getStripePaymentId(),
+                itemResponses,
+                order.getCreatedAt()
+        );
+    }
+
+    private StoreOrderResponse toStoreOrderResponse(Order order) {
+        List<OrderItemResponse> itemResponses = order.getItems().stream()
+                .map(item -> new OrderItemResponse(
+                            item.getId(),
+                            item.getBookId(),
+                            item.getQuantity(),
+                            item.getPrice()
+                ))
+                .toList();
+
+        return new StoreOrderResponse(
+                order.getId(),
+                order.getBuyerKeycloakId(),
+                order.getBranchId(),
+                order.getStoreId(),
+                order.getTotalPrice(),
+                order.getStatus().name(),
+                order.getPaymentStatus().name(),
+                order.getShippingAddress(),
                 itemResponses,
                 order.getCreatedAt()
         );

@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/store/orders")
+@RequestMapping("/api/orders/store")
 @RequiredArgsConstructor
 public class StoreOrderController {
 
@@ -29,6 +30,20 @@ public class StoreOrderController {
         UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
 
         List<OrderSummaryResponse> response = orderService.getStoreOrders(storeId);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
+
+    }
+
+    @GetMapping("/{orderId}")
+    @PreAuthorize("hasRole('STORE_ADMIN')")
+    public ResponseEntity<ApiResponse<StoreOrderResponse>> getStoreOrder(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID orderId
+    ){
+        UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
+
+        StoreOrderResponse response = orderService.getStoreOrder(orderId, storeId);
 
         return ResponseEntity.ok(ApiResponse.ok(response));
 

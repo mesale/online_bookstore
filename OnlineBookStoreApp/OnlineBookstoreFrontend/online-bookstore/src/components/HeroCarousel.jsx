@@ -7,7 +7,11 @@ const FEATURED_BOOKS = [
     author: "Elizabeth Gilbert",
     rating: 3,
     votes: "1,987,765",
+<<<<<<< HEAD
     bg: "bg-pink-200",
+=======
+    description: "A masterful exploration of memory and the quiet whispers of history. This pick dives deep into the journals of a forgotten librarian.",
+>>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
     cover: "https://covers.openlibrary.org/b/id/8739161-L.jpg",
   },
   {
@@ -16,8 +20,13 @@ const FEATURED_BOOKS = [
     author: "Andrea Jordan",
     rating: 3,
     votes: "1,987,765",
+<<<<<<< HEAD
     bg: "bg-yellow-100",
     cover: "https://placehold.co/160x220/f59e0b/fff?text=Book",
+=======
+    description: "A thrilling sci-fi adventure that tests the limits of humanity's survival and resilience.",
+    cover: "https://placehold.co/400x600/f59e0b/fff?text=Attack+of+The+Planet",
+>>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
   },
   {
     id: 3,
@@ -25,11 +34,16 @@ const FEATURED_BOOKS = [
     author: "Claudia Gray",
     rating: 4,
     votes: "1,987,765",
+<<<<<<< HEAD
     bg: "bg-sky-200",
+=======
+    description: "An incredible journey through multiple dimensions and alternate lives.",
+>>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
     cover: "https://covers.openlibrary.org/b/id/8228691-L.jpg",
   },
 ];
 
+<<<<<<< HEAD
 function StarRating({ rating }) {
   return (
     <div className="flex gap-0.5">
@@ -44,10 +58,15 @@ function StarRating({ rating }) {
 
 export default function HeroCarousel() {
   const [active, setActive] = useState(1); // center card
+=======
+export default function HeroCarousel() {
+  const [active, setActive] = useState(0);
+>>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)
 
   const prev = () => setActive((a) => (a - 1 + FEATURED_BOOKS.length) % FEATURED_BOOKS.length);
   const next = () => setActive((a) => (a + 1) % FEATURED_BOOKS.length);
 
+<<<<<<< HEAD
   const getVisible = () => {
     const len = FEATURED_BOOKS.length;
     return [
@@ -135,3 +154,76 @@ export default function HeroCarousel() {
     </div>
   );
 }
+=======
+  const book = FEATURED_BOOKS[active];
+
+  return (
+    <div className="relative w-full py-12 px-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center bg-surface-variant p-12 relative overflow-hidden rounded-lg shadow-elevation-1">
+        {/* Left Side Info */}
+        <div className="lg:col-span-7 z-10 flex flex-col justify-center min-h-[400px]">
+          <span className="label-md text-primary tracking-[0.2em] mb-4 block uppercase">
+            Curated Selection
+          </span>
+          <h2 className="display-lg text-primary mb-6 leading-tight">
+            Book of the Month:<br/>
+            <span className="italic text-secondary">{book.title}</span>
+          </h2>
+          <p className="body-lg text-on-surface-variant mb-8 max-w-xl">
+            {book.description}
+          </p>
+          <p className="label-md text-secondary mb-8">
+            by {book.author}
+          </p>
+          
+          <div className="flex items-center gap-6">
+            <button className="btn-primary px-8 py-4 label-md">
+              Reserve a Copy
+            </button>
+            <button className="btn-secondary px-8 py-4 label-md">
+              Read Preview
+            </button>
+          </div>
+        </div>
+
+        {/* Right Side Image */}
+        <div className="lg:col-span-5 relative group flex justify-center">
+          <div className="aspect-[2/3] w-full max-w-sm bg-white shadow-elevation-3 transition-transform duration-500 group-hover:scale-[1.02] overflow-hidden">
+            <img 
+              src={book.cover} 
+              alt={book.title} 
+              className="w-full h-full object-cover transition-opacity duration-500" 
+              key={book.cover}
+            />
+          </div>
+        </div>
+
+        {/* Artistic Texture */}
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
+
+        {/* Carousel Navigation */}
+        <div className="absolute bottom-6 right-6 flex gap-4 z-20">
+          <button 
+            onClick={prev} 
+            className="p-3 bg-surface border border-outline-variant rounded-full text-primary hover:border-primary hover:bg-surface-variant transition-colors active:scale-90"
+            aria-label="Previous Book"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button 
+            onClick={next} 
+            className="p-3 bg-surface border border-outline-variant rounded-full text-primary hover:border-primary hover:bg-surface-variant transition-colors active:scale-90"
+            aria-label="Next Book"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+>>>>>>> 9e3f8ba (feat: replace legacy bookstore-login with new online-bookstore frontend and update backend security and service configurations.)

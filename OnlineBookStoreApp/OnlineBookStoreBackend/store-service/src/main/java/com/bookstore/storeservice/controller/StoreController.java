@@ -52,6 +52,13 @@ public class StoreController {
 
     }
 
+    @GetMapping("/public/{storeId}")
+    public ResponseEntity<ApiResponse<StoreSummaryResponse>> geetStoreById(@PathVariable UUID storeId){
+
+        return ResponseEntity.ok(ApiResponse.ok(storeService.getStore(storeId)));
+
+    }
+
     @GetMapping("/{storeId}/stripe-account")
     @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('EMPLOYEE') or hasRole('USER')")
     public ResponseEntity<ApiResponse<String>> getStripeAccountId(

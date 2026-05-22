@@ -69,4 +69,17 @@ public class UserController {
 
     }
 
+    @GetMapping("/stores/me/branch/{branchId}/employees")
+    @PreAuthorize("hasRole('STORE_ADMIN')")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getEmployees(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID branchId
+    ){
+
+        List<UserResponse> responses = userService.getEmployees(branchId);
+
+        return ResponseEntity.ok(ApiResponse.ok(responses));
+
+    }
+
 }

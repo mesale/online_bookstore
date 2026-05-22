@@ -215,6 +215,19 @@ public class UserService {
         return touserResponse(user);
     }
 
+    public List<UserResponse> getEmployees(UUID branchId){
+
+        List<UUID> userIds = employeeRepository.findByBranchId(branchId)
+                .stream()
+                .map(Employee::getUserId)
+                .toList();
+
+        return userRepository.findAllById(userIds)
+                .stream()
+                .map(this::touserResponse)
+                .toList();
+    }
+
     private UserResponse touserResponse(User user){
         return new UserResponse(
                 user.getId(),

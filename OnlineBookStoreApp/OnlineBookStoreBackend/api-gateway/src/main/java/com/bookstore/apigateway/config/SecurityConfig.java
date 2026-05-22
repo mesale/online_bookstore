@@ -28,6 +28,8 @@ public class SecurityConfig {
                 .authorizeExchange(exchangeSpec -> exchangeSpec
                         .pathMatchers( HttpMethod.POST, "/api/users/register").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/books/**", "/api/books").permitAll()
+                        .pathMatchers( "/api/stores/me/branch/public/**").permitAll()
+                        .pathMatchers( "/api/stores/public/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/eureka/**").permitAll()
                         .pathMatchers("/actuator/health", "/api/payments/webhook").permitAll()
                         .anyExchange().authenticated()

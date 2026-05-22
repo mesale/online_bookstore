@@ -165,14 +165,16 @@ public class StoreService {
 
     }
 
-    public StoreResponse getStore(UUID storeId){
+    public StoreSummaryResponse getStore(UUID storeId){
 
         Store store = storeRepository
                 .findById(storeId).orElseThrow(()-> new ResourceNotFoundException("Store Not Found"));
 
-        return toStoreResponse(store);
+        return toStoreSummaryResponse(store);
 
     }
+
+
 
     public StoreResponse getMyStore(UUID storeId){
 
@@ -218,6 +220,18 @@ public class StoreService {
                 store.getVerificationStatus().name(),
                 store.getRejectionReason(),
                 store.getCreatedAt()
+        );
+    }
+
+    private StoreSummaryResponse toStoreSummaryResponse(Store store){
+        return new StoreSummaryResponse(
+                store.getId(),
+                store.getStoreName(),
+                store.getRegion(),
+                store.getCity(),
+                store.getAddress(),
+                store.getEmail(),
+                store.getPhone()
         );
     }
 

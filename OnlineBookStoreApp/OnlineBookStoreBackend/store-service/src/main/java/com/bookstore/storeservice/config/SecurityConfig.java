@@ -36,6 +36,8 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers( "/actuator/health").permitAll()
+                        .requestMatchers( "/api/stores/me/branch/public/**").permitAll()
+                    .requestMatchers( "/api/stores/public/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )

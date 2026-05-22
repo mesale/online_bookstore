@@ -43,7 +43,7 @@ public class BranchController {
 
     @GetMapping
     @PreAuthorize("hasRole('STORE_ADMIN')")
-    public ResponseEntity<ApiResponse<List<BranchResponse>>> getMyBranch(@AuthenticationPrincipal Jwt jwt){
+    public ResponseEntity<ApiResponse<List<BranchResponse>>> getMyBranches(@AuthenticationPrincipal Jwt jwt){
 
         UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
 
@@ -66,6 +66,23 @@ public class BranchController {
 
         return ResponseEntity.ok(ApiResponse.ok(response));
 
+    }
+
+    @GetMapping("/my-branch")
+    @PreAuthorize("hasRole('WORKER')")
+    public ResponseEntity<ApiResponse<BranchResponse>> genMyBranch(@AuthenticationPrincipal Jwt jwt){
+
+        UUID branchId = UUID.fromString(jwt.getClaim("branch_id"));
+
+        BranchResponse response = branchService.getBranchById(branchId);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
+
+    }
+
+    @GetMapping("/public/{branchId}")
+    public ResponseEntity<ApiResponse<BranchResponse>> getBranchById(@PathVariable UUID branchId){
+        return ResponseEntity.ok(ApiResponse.ok(branchService.getBranchById(branchId)));
     }
 
     @GetMapping("/{branchId}/exists")

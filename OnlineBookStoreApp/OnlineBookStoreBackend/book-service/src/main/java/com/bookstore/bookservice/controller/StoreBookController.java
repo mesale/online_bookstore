@@ -28,12 +28,13 @@ public class StoreBookController {
 
     private final BookService bookService;
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = {"/branch/{branchId}"})
     @PreAuthorize("hasRole('STORE_ADMIN') or  hasRole('WORKER') or hasRole('BRANCH_MANAGER')")
     public ResponseEntity<ApiResponse<BookResponse>> createBook(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestPart("data") CreateBookRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile image
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @PathVariable UUID branchId
             ){
         String keycloakId = jwt.getSubject();
         String role = extractRole(jwt);
@@ -43,9 +44,9 @@ public class StoreBookController {
             if (jwt.getClaim("store_id") == null)
                 throw new RuntimeException("store_id claim is null");
             UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
-            response = bookService.createBookAsOwner(keycloakId, storeId, request, image);
+            response = bookService.createBookAsOwner(keycloakId, storeId, branchId, request, image);
         } else {
-            UUID branchId = UUID.fromString(jwt.getClaim("branch_id"));
+            branchId = UUID.fromString(jwt.getClaim("branch_id"));
             UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
             response = bookService.createBookAsEmployee(keycloakId, branchId, storeId, request, image);
         }
@@ -54,6 +55,21 @@ public class StoreBookController {
                 .body(ApiResponse.ok("Book created successfully", response));
 
     }
+
+//    @PostMapping(value = "/{branchId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    @PreAuthorize("hasRole('STORE_ADMIN')")
+//    public ResponseEntity<ApiResponse<BookResponse>> createBookForBranch(
+//            @AuthenticationPrincipal Jwt jwt,
+//            @PathVariable UUID branchId,
+//            @Valid @RequestPart("data") CreateBookRequest request,
+//            @RequestPart(value = "image", required = false) MultipartFile image
+//    ){
+//        UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
+//        BookResponse response = bookService.createBookForBranch(storeId, branchId, request, image);
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(ApiResponse.ok("Book created for branch successfully", response));
+//    }
+
 
 
 
@@ -97,10 +113,18 @@ public class StoreBookController {
 
         return ResponseEntity.ok(ApiResponse.ok("Book deleted", null));
     }
-    @GetMapping("/my-branch")
-    @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('EMPLOYEE')")
-    public ResponseEntity<ApiResponse<List<BookResponse>>> getBranchBooks(@AuthenticationPrincipal Jwt jwt){
-        UUID branchId = UUID.fromString(jwt.getClaim("branch_id"));
+    @GetMapping("/branch/{branchId}")
+    @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('WORKER')")
+    public ResponseEntity<ApiResponse<List<BookResponse>>> getBranchBooks(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID branchId
+    ){
+
+        String role = extractRole(jwt);
+
+        if(role.equals("WORKER") ||role.equals("BRANCH_MANAGER"))
+            branchId = UUID.fromString(jwt.getClaim("branch_id"));
+
         List<BookResponse> response = bookService.getBranchBooks(branchId);
 
         return ResponseEntity.ok(ApiResponse.ok(response));

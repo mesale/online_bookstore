@@ -25,6 +25,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     Optional<Order> findByIdAndBranchId(UUID orderId, UUID branchId);
 
+    Optional<Order> findByIdAndStoreId(UUID orderId, UUID storeId);
+
     Optional<Order> findByDeliveryPin(String deliveryPin);
 
 }

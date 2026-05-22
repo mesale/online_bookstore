@@ -55,6 +55,16 @@ public class StoreDto {
             LocalDateTime createdAt
     ) {}
 
+    public record StoreSummaryResponse(
+            UUID id,
+            String storeName,
+            String region,
+            String city,
+            String address,
+            String email,
+            String phone
+    ){}
+
     public record UpdateStoreRequest(
 
             @NotBlank(message = "Store name is required")

@@ -57,6 +57,19 @@ public class OrderDto {
             LocalDateTime createdAt
     ) {}
 
+    public record StoreOrderResponse(
+            UUID id,
+            String buyerKeycloakId,
+            UUID branchId,
+            UUID storeId,
+            BigDecimal totalPrice,
+            String status,
+            String paymentStatus,
+            String shippingAddress,
+            List<OrderItemResponse> items,
+            LocalDateTime createdAt
+    ) {}
+
     public record OrderItemResponse(
             UUID id,
             UUID bookId,
