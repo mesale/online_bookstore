@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   bookstore-postgres:
@@ -7,9 +5,9 @@ services:
     container_name: bookstore-postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
     ports:
       - "5432:5432"
     volumes:
@@ -23,13 +21,22 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7
+    container_name: bookstore-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - bookstore-network
+
   minio:
     image: minio/minio:latest
     container_name: bookstore-minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -45,12 +52,12 @@ services:
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://bookstore-postgres:5432/keycloak_db
-      KC_DB_USERNAME: postgres
-      KC_DB_PASSWORD: postgres 
+      KC_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       KC_SPI_THEME_DEFAULT: readbooks
 
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
     ports:
       - "8080:8080"
     volumes:
@@ -111,8 +118,13 @@ services:
 
     networks:
       - bookstore-network
+    environment:
+      - SPRING_DATA_REDIS_HOST=bookstore-redis
+      - SPRING_DATA_REDIS_PORT=6379
     depends_on:
       discovery-service:
+        condition: service_started
+      redis:
         condition: service_started
   user-service:
     build: ./user-service
@@ -121,9 +133,14 @@ services:
       - "8081:8081"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://bookstore-postgres:5432/bookstore_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookstore-kafka:29092
+      - KEYCLOAK_ADMIN_CLIENT_ID=${KEYCLOAK_ADMIN_CLIENT_ID:-bookstore-backend}
+      - KEYCLOAK_ADMIN_CLIENT_SECRET=${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - APP_FRONTEND_URL=${APP_FRONTEND_URL:-http://localhost:5173}
     networks:
       - bookstore-network
     depends_on:
@@ -141,8 +158,15 @@ services:
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookstore-kafka:29092
       - SPRING_DATASOURCE_URL=jdbc:postgresql://bookstore-postgres:5432/bookstore_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - KEYCLOAK_ADMIN_CLIENT_ID=${KEYCLOAK_ADMIN_CLIENT_ID:-bookstore-backend}
+      - KEYCLOAK_ADMIN_CLIENT_SECRET=${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - APP_FRONTEND_URL=${APP_FRONTEND_URL:-http://localhost:5173}
     networks:
       - bookstore-network
     depends_on:
@@ -161,8 +185,10 @@ services:
       - "8084:8084"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://bookstore-postgres:5432/bookstore_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
     networks:
       - bookstore-network
     depends_on:
@@ -178,9 +204,15 @@ services:
       - "8086:8086"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://bookstore-postgres:5432/bookstore_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookstore-kafka:29092
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_CONNECT_CLIENT_ID=${STRIPE_CONNECT_CLIENT_ID:-}
+      - STRIPE_PREMIUM_PRICE_ID=${STRIPE_PREMIUM_PRICE_ID:-}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
 
     networks:
       - bookstore-network
@@ -200,8 +232,8 @@ services:
       - "8085:8085"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://bookstore-postgres:5432/bookstore_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookstore-kafka:29092
     networks:
       - bookstore-network
@@ -214,6 +246,24 @@ services:
       discovery-service:
         condition: service_started
       keycloak:
+        condition: service_started
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=bookstore-kafka:29092
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - APP_FRONTEND_URL=${APP_FRONTEND_URL:-http://localhost:5173}
+    networks:
+      - bookstore-network
+    depends_on:
+      kafka:
+        condition: service_started
+      discovery-service:
         condition: service_started
 
 networks:

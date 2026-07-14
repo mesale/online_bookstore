@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,6 +45,16 @@ public class StoreOrderController {
         UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
 
         StoreOrderResponse response = orderService.getStoreOrder(orderId, storeId);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
+
+    }
+
+    @GetMapping("/{storeId}/revenue")
+    @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('EMPLOYEE')")
+    public ResponseEntity<ApiResponse<BigDecimal>> getStoreRevenue(@PathVariable UUID storeId){
+
+        BigDecimal response = orderService.getStoreRevenue(storeId);
 
         return ResponseEntity.ok(ApiResponse.ok(response));
 

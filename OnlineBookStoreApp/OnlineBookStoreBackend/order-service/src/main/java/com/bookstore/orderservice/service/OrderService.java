@@ -135,6 +135,20 @@ public class OrderService {
 
     }
 
+    @Transactional
+    public void handleOrderRefunded(com.bookstore.orderservice.event.OrderRefundedEvent event) {
+
+        Order order = orderRepository.findById(event.getOrderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found for refund event: " + event.getOrderId()));
+
+        order.setStatus(Order.Status.CANCELLED);
+        order.setPaymentStatus(Order.PaymentStatus.REFUNDED);
+        orderRepository.save(order);
+
+        log.info("Order {} marked as CANCELLED/REFUNDED after Stripe refund {}", event.getOrderId(), event.getStripeRefundId());
+
+    }
+
     public List<OrderSummaryResponse> getBranchOrders(UUID branchId){
 
         return orderRepository.findByBranchId(branchId)
@@ -142,6 +156,14 @@ public class OrderService {
                 .map(this::toOrderSummaryResponse)
                 .toList();
 
+    }
+
+    public long getBranchOrdersCount(UUID branchId){
+        return orderRepository.countByBranchId(branchId);
+    }
+
+    public BigDecimal getStoreRevenue(UUID storeId){
+        return orderRepository.calculateRevenue(storeId);
     }
 
     public List<OrderSummaryResponse> getPendingBranchOrders(UUID branchId){
@@ -158,8 +180,6 @@ public class OrderService {
         Order order = orderRepository.findByDeliveryPin(request.pin())
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid PIN"));
 
-
-
         if (!order.getBranchId().equals(branchId))
             throw new UnauthorizedException("This PIN does not belong to your branch");
         if (order.getDeliveryPinUsed())
@@ -169,23 +189,35 @@ public class OrderService {
         if (order.getStatus() != Order.Status.PAID)
             throw new ConflictException("Order is not in paid Status");
 
-        BigDecimal commission = order.getTotalPrice()
-                .multiply(FREE_PLAN_COMMISSION_RATE);
+        // Fetch the store's current plan to apply the correct commission rate
+        BigDecimal commissionRate;
+        try {
+            String plan = storeClient.getStorePlan(order.getStoreId()).getBody().data();
+            commissionRate = "PREMIUM".equalsIgnoreCase(plan)
+                    ? PREMIUM_PLAN_COMMISSION_RATE
+                    : FREE_PLAN_COMMISSION_RATE;
+            log.info("Applying {} commission rate ({}) for storeId: {} on orderId: {}",
+                    plan, commissionRate, order.getStoreId(), order.getId());
+        } catch (Exception e) {
+            log.warn("Could not fetch store plan for storeId: {}, defaulting to FREE rate. Error: {}",
+                    order.getStoreId(), e.getMessage());
+            commissionRate = FREE_PLAN_COMMISSION_RATE;
+        }
+
+        BigDecimal commission = order.getTotalPrice().multiply(commissionRate);
+        BigDecimal amountToRelease = order.getTotalPrice().subtract(commission);
 
         order.setStatus(Order.Status.DELIVERED);
         order.setDeliveryPinUsed(true);
 
-        BigDecimal amountToRelease = order.getTotalPrice().subtract(commission);
-
-
         String stripeAccountId;
-        try{
+        try {
             stripeAccountId = storeClient
                     .getStripeAccountId(order.getStoreId())
                     .getBody().data();
-        }catch (Exception e){
-            log.error("Failed to fetch stripeAccountId");
-            throw new ConflictException("Could not retrieve stripeAccountId" + e.getMessage());
+        } catch (Exception e) {
+            log.error("Failed to fetch stripeAccountId for storeId: {}", order.getStoreId());
+            throw new ConflictException("Could not retrieve stripeAccountId: " + e.getMessage());
         }
 
         orderEventPublisher.publishDeliveryConfirmed(DeliveryConfirmedEvent.builder()

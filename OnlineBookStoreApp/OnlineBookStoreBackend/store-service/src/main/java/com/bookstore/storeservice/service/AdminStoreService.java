@@ -1,12 +1,14 @@
 package com.bookstore.storeservice.service;
 
 import com.bookstore.storeservice.dto.StoreDto.*;
+import com.bookstore.storeservice.entity.Document;
 import com.bookstore.storeservice.entity.Store;
 import com.bookstore.storeservice.exception.ConflictException;
 import com.bookstore.storeservice.exception.ResourceNotFoundException;
 import com.bookstore.storeservice.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,13 @@ public class AdminStoreService {
 
     private final StoreRepository storeRepository;
 
+    @Value("http://localhost:9000")
+    private String minioUrl;
+
+    @Value("${minio.bucket-name}")
+    private String minioBucket;
+
+    @Transactional(readOnly = true)
     public List<StoreResponse> getStoresByStatus(Store.VerificationStatus status) {
         return storeRepository.findByVerificationStatus(status)
                 .stream()
@@ -64,6 +73,16 @@ public class AdminStoreService {
     }
 
     private StoreResponse toStoreResponse(Store store) {
+        List<DocumentResponse> docs = store.getDocuments() == null ? List.of() :
+                store.getDocuments().stream()
+                        .map(doc -> new DocumentResponse(
+                                doc.getId(),
+                                doc.getDocumentType() != null ? doc.getDocumentType().name() : "OTHER",
+                                doc.getFileName(),
+                                minioUrl + "/" + minioBucket + "/" + doc.getObjectKey()
+                        ))
+                        .toList();
+
         return new StoreResponse(
                 store.getId(),
                 store.getStoreName(),
@@ -79,7 +98,8 @@ public class AdminStoreService {
                 store.getPlan().name(),
                 store.getVerificationStatus().name(),
                 store.getRejectionReason(),
-                store.getCreatedAt()
+                store.getCreatedAt(),
+                docs
         );
     }
 }

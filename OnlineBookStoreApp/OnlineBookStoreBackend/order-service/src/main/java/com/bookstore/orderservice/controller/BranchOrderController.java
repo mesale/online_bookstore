@@ -11,7 +11,9 @@
     import org.springframework.security.oauth2.jwt.Jwt;
     import org.springframework.web.bind.annotation.*;
 
+    import java.util.Collection;
     import java.util.List;
+    import java.util.Map;
     import java.util.UUID;
 
     @RestController
@@ -30,6 +32,20 @@
             UUID branchId = UUID.fromString(jwt.getClaim("branch_id"));
 
             List<OrderSummaryResponse> response = orderService.getBranchOrders(branchId);
+
+            return ResponseEntity.ok(ApiResponse.ok(response));
+
+        }
+
+        @GetMapping("/{branchId}/count")
+        @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('WORKER')")
+        public ResponseEntity<ApiResponse<Long>> getBranchOrdersCount(
+                @AuthenticationPrincipal Jwt jwt,
+                @PathVariable UUID branchId){
+
+            if (extractRole(jwt).equals("WORKER")) branchId = UUID.fromString(jwt.getClaim("branch_id"));
+
+            long response = orderService.getBranchOrdersCount(branchId);
 
             return ResponseEntity.ok(ApiResponse.ok(response));
 
@@ -59,6 +75,13 @@
 
             return ResponseEntity.ok(ApiResponse.ok("Delivery Confirmed successfully", response));
 
+        }
+
+        private String extractRole(Jwt jwt) {
+            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+            Collection<String> roles = (Collection<String>) realmAccess.get("roles");
+            if (roles.contains("ROLE_STORE_ADMIN")) return "ROLE_STORE_ADMIN";
+            return "ROLE_EMPLOYEE";
         }
 
     }

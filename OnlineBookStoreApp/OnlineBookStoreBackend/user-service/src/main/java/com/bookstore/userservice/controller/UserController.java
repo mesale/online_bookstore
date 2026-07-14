@@ -30,6 +30,12 @@ public class UserController {
                 .body(ApiResponse.ok("User registered successfully", response));
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestParam String email){
+        userService.forgotPassword(email);
+        return ResponseEntity.ok(ApiResponse.ok("Password reset email sent", null));
+    }
+
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<UserResponse>> getMyProfile(@AuthenticationPrincipal Jwt jwt){
@@ -65,8 +71,25 @@ public class UserController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Employee created", response));
+                .body(ApiResponse.ok("Employee invitation sent", response));
 
+    }
+    
+    @GetMapping("/invitations/{token}")
+    public ResponseEntity<ApiResponse<com.bookstore.userservice.dto.EmployeeInvitationResponse>> getInvitationDetails(
+            @PathVariable String token
+    ){
+        com.bookstore.userservice.dto.EmployeeInvitationResponse response = userService.getInvitationDetails(token);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+    
+    @PostMapping("/invitations/{token}/confirm")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<UserResponse>> confirmInvitation(
+            @PathVariable String token
+    ){
+        UserResponse response = userService.confirmEmployeeInvitation(token);
+        return ResponseEntity.ok(ApiResponse.ok("Invitation confirmed successfully", response));
     }
 
     @GetMapping("/stores/me/branch/{branchId}/employees")

@@ -20,9 +20,21 @@ public class PaymentEventConsumer {
         try{
             orderService.handlePaymentCompleted(event);
         }catch(Exception e){
-            log.error("Failed to process DeliveryConfirmedEvent for orderId: {}", event.getOrderId(), e);
+            log.error("Failed to process PaymentCompletedEvent for orderId: {}", event.getOrderId(), e);
         }
 
     }
 
+    @KafkaListener(topics = KafkaTopics.ORDER_REFUNDED, groupId = "order-service")
+    public void handleOrderRefunded(OrderRefundedEvent event) {
+        log.info("Received OrderRefundedEvent for orderId: {}", event.getOrderId());
+
+        try {
+            orderService.handleOrderRefunded(event);
+        } catch (Exception e) {
+            log.error("Failed to process OrderRefundedEvent for orderId: {}", event.getOrderId(), e);
+        }
+    }
+
 }
+

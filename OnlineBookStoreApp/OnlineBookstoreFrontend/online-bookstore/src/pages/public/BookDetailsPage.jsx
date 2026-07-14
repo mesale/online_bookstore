@@ -8,6 +8,7 @@ import {
   isBookAvailable,
 } from "../../utils/book";
 import { useAuth } from "../../context/useAuth.js";
+import { useCart } from "../../context/useCart";
 import { FiInbox, FiCheck, FiBox } from "react-icons/fi";
 
 function StarRating({ rating = 4 }) {
@@ -79,18 +80,27 @@ export default function BookDetailsPage() {
   const storeName = store?.storeName;
   const branchName = branch?.branchName;
 
+  const { addToCart, cartItems } = useCart();
+  const alreadyInCart = book ? cartItems.some((item) => item.id === book.id) : false;
+
   const handleOrder = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       login();
       return;
     }
-    navigate("/checkout", { state: { book } });
+    if (book && !alreadyInCart) {
+      addToCart(book);
+    }
+    navigate("/checkout");
   };
 
-  const handleAddToWishlist = () => {
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+  const handleAddToCart = () => {
+    if (book) {
+      addToCart(book);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    }
   };
 
   if (bookLoading || storeLoading) {
@@ -157,7 +167,7 @@ export default function BookDetailsPage() {
               />
             </div>
 
-            {/* Action Buttons */}
+             {/* Action Buttons */}
             <button
               onClick={handleOrder}
               className="w-full bg-primary text-white rounded-lg py-3 font-semibold text-sm hover:bg-primary-container transition-colors shadow-elevation-1"
@@ -165,13 +175,13 @@ export default function BookDetailsPage() {
               Order Now
             </button>
             <button
-              onClick={handleAddToWishlist}
+              onClick={handleAddToCart}
               className={`w-full border-2 rounded-lg py-3 font-semibold text-sm transition-colors ${added
                 ? "border-green-500 text-primary"
                 : "border-primary text-primary hover:bg-primary hover:text-white"
                 }`}
             >
-              {added ? <span className="flex items-center justify-center gap-2"><FiCheck /> Added to Wishlist</span> : "Add to Wishlist"}
+              {added ? <span className="flex items-center justify-center gap-2"><FiCheck /> Added to Cart</span> : "Add to Cart"}
             </button>
           </div>
 

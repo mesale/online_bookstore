@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import keycloak from "../auth/keycloak";
 import { AuthContext } from "./authContext";
+import { getDashboardPath } from "./authUtils";
 
 let keycloakInitPromise;
 
@@ -18,15 +19,6 @@ function initKeycloak() {
 
   return keycloakInitPromise;
 }
-
-// Helper to map role to dashboard path
-export const getDashboardPath = (roles) => {
-  if (roles.includes("ROLE_ADMIN")) return "/admin";
-  if (roles.includes("ROLE_STORE_ADMIN")) return "/store";
-  if (roles.includes("ROLE_WORKER") || roles.includes("ROLE_EMPLOYEE")) return "/employee";
-  if (roles.includes("ROLE_USER")) return "/dashboard";
-  return "/";
-};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -46,7 +38,7 @@ export function AuthProvider({ children }) {
         navigate(targetPath);
       }
     }
-  }, [user, loading]);
+  }, [location.pathname, navigate, user, loading]);
 
   useEffect(() => {
     let mounted = true;
@@ -136,5 +128,4 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
 

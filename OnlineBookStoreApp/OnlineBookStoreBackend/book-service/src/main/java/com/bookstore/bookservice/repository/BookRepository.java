@@ -28,6 +28,7 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
 
     Page<Book> findByBranchIdAndApprovedTrue(UUID branchId, Pageable pageable);
 
+    long countByBranchId(UUID branchId);
 
     Page<Book> findByApprovedFalse(Pageable pageable);
 

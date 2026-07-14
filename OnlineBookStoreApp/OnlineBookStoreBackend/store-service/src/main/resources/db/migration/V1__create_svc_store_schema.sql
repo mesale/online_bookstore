@@ -15,6 +15,7 @@ CREATE TABLE stores (
                         email                   VARCHAR(255) NOT NULL UNIQUE,
                         phone                   VARCHAR(20),
                         stripe_account_id       VARCHAR(255),
+                        onboarding_completed BOOLEAN NOT NULL DEFAULT false,
                         plan                    VARCHAR(10) NOT NULL DEFAULT 'FREE'
                             CHECK (plan IN ('FREE', 'PREMIUM')),
                         verification_status     VARCHAR(10) NOT NULL DEFAULT 'PENDING'
@@ -62,13 +63,11 @@ CREATE TABLE documents (
                            created_at      TIMESTAMP NOT NULL DEFAULT now(),
 
                            CONSTRAINT fk_document_store
-                               FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE);
-
-                           CREATE INDEX idx_documents_store_id ON documents(store_id);
-                           CREATE INDEX idx_documents_type ON documents(document_type);
-
-                           CREATE UNIQUE INDEX uq_store_document_type
-                               ON documents(store_id, document_type);
-
-
+                               FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_documents_store_id ON documents(store_id);
+CREATE INDEX idx_documents_type ON documents(document_type);
+
+CREATE UNIQUE INDEX uq_store_document_type
+    ON documents(store_id, document_type);

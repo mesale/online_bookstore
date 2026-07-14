@@ -1,11 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../context/useAuth";
 import api from "../../api/axiosInstance";
 import { unwrapList, unwrapItem } from "../../utils/apiHelpers";
 import { getBookImageUrl } from "../../utils/book";
-import { FiBox, FiCheck, FiBook, FiPhone, FiMail, FiCheckCircle, FiTruck, FiDollarSign, FiAlertTriangle, FiInbox, FiHome } from "react-icons/fi";
+import { FiBox, FiCheck, FiBook, FiPhone, FiMail, FiCheckCircle, FiTruck, FiDollarSign, FiAlertTriangle, FiInbox, FiHome, FiLock, FiCreditCard, FiX, FiRefreshCw } from "react-icons/fi";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
+const getInitials = (name) => {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 
 const STATUS_COLORS = {
   PENDING: { bg: "bg-surface-variant", text: "text-on-surface-variant" },
@@ -29,8 +42,257 @@ function StatCard({ icon, label, value }) {
   );
 }
 
-function OrderCard({ order, onTrack, onDetails, isLoading }) {
+// ─── Stripe Payment Form (inside modal) ──────────────────────────────────────
+function StripePaymentForm({ amount, onSuccess }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setSubmitting(true);
+    setPaymentError("");
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: { return_url: `${window.location.origin}/dashboard` },
+      redirect: "if_required",
+    });
+    if (error) {
+      setPaymentError(error.message || "Payment failed. Please try again.");
+    } else {
+      onSuccess();
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {amount && (
+        <div className="flex items-center justify-between bg-surface-container-lowest border border-surface-variant p-4">
+          <p className="label-md text-secondary uppercase tracking-wider">Amount Due</p>
+          <p className="headline-sm text-primary font-bold">ETB {amount}</p>
+        </div>
+      )}
+      <PaymentElement />
+      {paymentError && (
+        <div className="flex items-center gap-3 bg-error/10 border border-error/20 p-4 text-error body-md">
+          <FiAlertTriangle /> {paymentError}
+        </div>
+      )}
+      <button
+        type="submit"
+        disabled={!stripe || submitting}
+        className="w-full btn-primary py-4 label-md disabled:opacity-60 flex items-center justify-center gap-2"
+      >
+        {submitting ? (
+          <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</>
+        ) : (
+          <><FiCreditCard /> Pay Now</>
+        )}
+      </button>
+    </form>
+  );
+}
+
+// ─── Payment Modal ────────────────────────────────────────────────────────────
+function PaymentModal({ order, onClose, onPaid }) {
+  const [clientSecret, setClientSecret] = useState("");
+  const [amount, setAmount] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [paid, setPaid] = useState(false);
+
+  useEffect(() => {
+    api.post(`/payments/checkout/${order.id}`)
+      .then((res) => {
+        const data = res.data?.data;
+        setClientSecret(data.stripeClientSecret);
+        setAmount(data.amount);
+      })
+      .catch((err) => setError(err.response?.data?.message || "Failed to set up payment."))
+      .finally(() => setLoading(false));
+  }, [order.id]);
+
+  const handleSuccess = () => {
+    setPaid(true);
+    onPaid(order.id);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 flex items-center justify-center px-4" onClick={onClose}>
+      <div
+        className="bg-background border border-surface-variant shadow-elevation-3 p-8 w-full max-w-lg rounded-sm"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-surface-variant">
+          <div>
+            <h2 className="display-sm text-primary">Complete Payment</h2>
+            <p className="body-md text-secondary mt-1">Order #{order.id?.slice(0, 8)}</p>
+          </div>
+          <button onClick={onClose} className="text-secondary hover:text-primary transition-colors"><FiX size={22} /></button>
+        </div>
+
+        {paid ? (
+          <div className="text-center py-8 flex flex-col items-center gap-6">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl">
+              <FiCheckCircle />
+            </div>
+            <div>
+              <p className="headline-md text-primary">Payment Complete</p>
+              <p className="body-md text-secondary mt-2">Your order has been confirmed and is being processed.</p>
+            </div>
+            <button onClick={onClose} className="btn-primary px-8 py-3 label-md">Done</button>
+          </div>
+        ) : loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-4 text-secondary">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="body-md">Setting up secure payment...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center gap-6 py-8">
+            <div className="flex items-center gap-3 bg-error/10 border border-error/20 p-4 text-error body-md w-full">
+              <FiAlertTriangle /> {error}
+            </div>
+            <button onClick={onClose} className="btn-secondary px-8 py-3 label-md">Close</button>
+          </div>
+        ) : clientSecret ? (
+          <>
+            <Elements
+              stripe={stripePromise}
+              options={{
+                clientSecret,
+                appearance: {
+                  theme: "stripe",
+                  variables: { colorPrimary: "#E63946", borderRadius: "4px", fontFamily: "DM Sans, sans-serif" },
+                },
+              }}
+            >
+              <StripePaymentForm amount={amount} onSuccess={handleSuccess} />
+            </Elements>
+            <div className="mt-6 flex items-center gap-2 text-xs text-secondary border-t border-surface-variant pt-4">
+              <FiLock /><span>Secured by Stripe. Funds held in escrow until delivery.</span>
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ─── Refund Modal ─────────────────────────────────────────────────────────────
+function RefundModal({ order, onClose, onRefunded }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const handleRefund = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      await api.post(`/payments/refund/${order.id}`);
+      setSuccess(true);
+      onRefunded(order.id);
+    } catch (err) {
+      setError(err.response?.data?.message || "Refund request failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 flex items-center justify-center px-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background border border-surface-variant shadow-elevation-3 p-8 w-full max-w-md rounded-sm"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-surface-variant">
+          <div>
+            <h2 className="font-display font-bold text-xl text-primary">Request Refund</h2>
+            <p className="body-md text-secondary mt-1">Order #{order.id?.slice(0, 8)}</p>
+          </div>
+          <button onClick={onClose} className="text-secondary hover:text-primary transition-colors">
+            <FiX size={22} />
+          </button>
+        </div>
+
+        {success ? (
+          <div className="text-center py-8 flex flex-col items-center gap-6">
+            <div className="w-16 h-16 rounded-full bg-green-100 border border-green-200 flex items-center justify-center text-green-600 text-3xl">
+              <FiCheckCircle />
+            </div>
+            <div>
+              <p className="font-display font-bold text-lg text-primary">Refund Initiated</p>
+              <p className="body-md text-secondary mt-2 leading-relaxed">
+                Your refund has been submitted to Stripe. The amount will be returned to your original payment method within 5–10 business days.
+              </p>
+            </div>
+            <button onClick={onClose} className="btn-primary px-8 py-3 label-md">Done</button>
+          </div>
+        ) : (
+          <>
+            {/* Warning */}
+            <div className="bg-amber-50 border border-amber-200 p-4 mb-6 flex gap-3">
+              <FiAlertTriangle className="text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="label-md text-amber-800">Are you sure?</p>
+                <p className="body-md text-amber-700 mt-1 leading-relaxed">
+                  This will cancel your order and issue a full refund of <strong>ETB {order.totalPrice}</strong> to your original payment method.
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            {/* Refund details */}
+            <div className="bg-surface-container-lowest border border-surface-variant p-4 mb-6 flex justify-between items-center">
+              <span className="label-md text-secondary uppercase tracking-wider">Refund Amount</span>
+              <span className="font-display font-bold text-xl text-primary">ETB {order.totalPrice}</span>
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-3 bg-error/10 border border-error/20 p-4 text-error body-md mb-4">
+                <FiAlertTriangle /> {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                disabled={loading}
+                className="flex-1 btn-secondary py-3 label-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRefund}
+                disabled={loading}
+                className="flex-1 py-3 label-md font-semibold bg-error text-white hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2 rounded-lg"
+              >
+                {loading ? (
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</>
+                ) : (
+                  <><FiRefreshCw /> Confirm Refund</>
+                )}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Order Card ───────────────────────────────────────────────────────────────
+function OrderCard({ order, onTrack, onDetails, onPay, onRefund, isLoading }) {
   const status = STATUS_COLORS[order.status] || STATUS_COLORS.PENDING;
+  const isPending = order.status === "PENDING";
+  const isPaid = order.status === "PAID";
   return (
     <div className="bg-surface-container-lowest border border-surface-variant p-6 shadow-elevation-1 rounded-sm flex flex-col sm:flex-row sm:items-center gap-6">
       {/* Icon */}
@@ -45,16 +307,40 @@ function OrderCard({ order, onTrack, onDetails, isLoading }) {
           <span className={`label-sm px-3 py-1 border ${status.bg === "bg-primary" ? "bg-primary text-on-primary border-primary" : "bg-surface text-secondary border-outline-variant"}`}>
             {order.status}
           </span>
+          {isPending && (
+            <span className="label-sm px-3 py-1 border border-amber-400 bg-amber-50 text-amber-700">Awaiting Payment</span>
+          )}
+          {isPaid && (
+            <span className="label-sm px-3 py-1 border border-blue-300 bg-blue-50 text-blue-700">Not Yet Delivered</span>
+          )}
         </div>
         <p className="body-md text-secondary mt-1">
           Branch #{order.branchId?.slice(0, 8)} · {new Date(order.createdAt).toLocaleDateString()}
         </p>
       </div>
 
-      {/* Price + Action */}
+      {/* Price + Actions */}
       <div className="flex flex-col items-end gap-3 flex-shrink-0">
         <p className="text-primary headline-sm">ETB {order.totalPrice}</p>
         <div className="flex flex-wrap gap-3">
+          {isPending && (
+            <button
+              onClick={() => onPay(order)}
+              disabled={isLoading}
+              className="btn-primary px-6 py-2 label-md disabled:opacity-60 flex items-center gap-2 bg-amber-600 hover:bg-amber-700 border-amber-600"
+            >
+              <FiCreditCard /> {isLoading ? "Loading..." : "Pay Now"}
+            </button>
+          )}
+          {isPaid && (
+            <button
+              onClick={() => onRefund(order)}
+              disabled={isLoading}
+              className="px-6 py-2 label-md disabled:opacity-60 flex items-center gap-2 border border-error text-error hover:bg-error hover:text-white transition-colors rounded-lg"
+            >
+              <FiRefreshCw size={14} /> Request Refund
+            </button>
+          )}
           <button
             onClick={() => onTrack(order.id)}
             disabled={isLoading}
@@ -145,18 +431,15 @@ function OrderTrackingModal({ order, onClose }) {
 
 function OrderItemRow({ item, index }) {
   const [book, setBook] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const bookId = item.bookId || item.book_id;
     if (!bookId) {
-      setLoading(false);
       return;
     }
     api.get(`/books/${bookId}`)
       .then(res => setBook(unwrapItem(res)))
-      .catch(() => { })
-      .finally(() => setLoading(false));
+      .catch(() => { });
   }, [item]);
 
   const title = book?.title || item.title || item.bookTitle || item.name || `Item ${index + 1}`;
@@ -375,6 +658,8 @@ export default function UserDashboard() {
   const [modalLoadingId, setModalLoadingId] = useState(null);
   const [modalError, setModalError] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
+  const [paymentOrder, setPaymentOrder] = useState(null);
+  const [refundOrder, setRefundOrder] = useState(null);
 
   useEffect(() => {
     // Fetch profile
@@ -390,7 +675,7 @@ export default function UserDashboard() {
   }, []);
 
   const totalSpent = orders
-    .filter((o) => o.status === "DELIVERED")
+    .filter((o) => ["PAID", "SHIPPED", "DELIVERED"].includes(o.status))
     .reduce((sum, o) => sum + (Number(o.totalPrice) || 0), 0);
 
   const fetchOrderModal = async (orderId) => {
@@ -428,6 +713,28 @@ export default function UserDashboard() {
     fetchOrderModal(orderId);
   };
 
+  const handlePayOrder = (order) => {
+    setPaymentOrder(order);
+  };
+
+  const handlePaymentComplete = (orderId) => {
+    // Optimistically update order status to PAID in the list
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: "PAID" } : o))
+    );
+  };
+
+  const handleRequestRefund = (order) => {
+    setRefundOrder(order);
+  };
+
+  const handleRefunded = (orderId) => {
+    // Optimistically update order status to CANCELLED in the list
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: "CANCELLED", paymentStatus: "REFUNDED" } : o))
+    );
+  };
+
   const TABS = [
     { id: "orders", label: "My Orders", count: orders.length },
     { id: "profile", label: "Profile" },
@@ -436,17 +743,15 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-on-background font-body-md antialiased pt-24 pb-16">
-      <Navbar />
+      <Navbar hideDashboardButton={true} />
 
       <div className="max-w-7xl mx-auto px-8 w-full mt-8">
 
         {/* Profile Header */}
         <div className="bg-surface-container-lowest border border-surface-variant p-8 mb-12 flex flex-col sm:flex-row items-start sm:items-center gap-8 shadow-elevation-1">
-          <img
-            src={`https://i.pravatar.cc/120?u=${user?.email}`}
-            alt={user?.name}
-            className="w-24 h-24 rounded-full object-cover border-2 border-outline-variant"
-          />
+          <div className="w-24 h-24 rounded-full bg-primary text-on-primary border-2 border-outline-variant flex items-center justify-center text-3xl font-bold select-none flex-shrink-0">
+            {getInitials(profile?.name || user?.name)}
+          </div>
           <div className="flex-1 min-w-0">
             <h1 className="display-md text-primary mb-2">
               {profile?.name || user?.name}
@@ -533,6 +838,8 @@ export default function UserDashboard() {
                   order={order}
                   onTrack={handleTrackOrder}
                   onDetails={handleViewDetails}
+                  onPay={handlePayOrder}
+                  onRefund={handleRequestRefund}
                   isLoading={modalLoadingId === order.id}
                 />
               ))
@@ -632,6 +939,25 @@ export default function UserDashboard() {
       </div>
 
       {/* Modals */}
+      {paymentOrder && (
+        <PaymentModal
+          order={paymentOrder}
+          onClose={() => setPaymentOrder(null)}
+          onPaid={handlePaymentComplete}
+        />
+      )}
+
+      {refundOrder && (
+        <RefundModal
+          order={refundOrder}
+          onClose={() => setRefundOrder(null)}
+          onRefunded={(orderId) => {
+            handleRefunded(orderId);
+            setRefundOrder(null);
+          }}
+        />
+      )}
+
       {modalOrder && (
         <OrderDetailModal
           order={modalOrder}

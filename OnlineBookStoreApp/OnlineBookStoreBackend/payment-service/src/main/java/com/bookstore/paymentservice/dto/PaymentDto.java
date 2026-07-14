@@ -36,4 +36,39 @@ public class PaymentDto {
             String status,
             LocalDateTime createdAt
     ) {}
+
+    public record RefundResponse(
+            UUID orderId,
+            String stripeRefundId,
+            BigDecimal refundedAmount
+    ) {}
+
+    // ── Subscription DTOs ──────────────────────────────────────────────────────
+
+    public record SubscribeSetupResponse(
+            UUID storeId,
+            String stripeCustomerId,
+            String setupIntentClientSecret,
+            String priceId
+    ) {}
+
+    public record SubscribeConfirmResponse(
+            UUID storeId,
+            String stripeSubscriptionId,
+            String status,
+            LocalDateTime currentPeriodEnd
+    ) {}
+
+    public record SubscribeConfirmRequest(
+            String paymentMethodId
+    ) {}
+
+    public record SubscriptionStatusResponse(
+            UUID storeId,
+            String stripeSubscriptionId,
+            String status,          // ACTIVE | PAST_DUE | CANCELED | INCOMPLETE | NONE
+            LocalDateTime currentPeriodEnd,
+            boolean cancelAtPeriodEnd
+    ) {}
 }
+

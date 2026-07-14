@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import HomePage from "../pages/public/HomePage";
 import BookDetailsPage from "../pages/public/BookDetailsPage";
 import SearchResultsPage from "../pages/public/SearchResultsPage";
+import StoresPage from "../pages/public/StoresPage";
 import ProtectedRoute from "./ProtectedRoute";
 import RegisterPage from "../pages/public/RegisterPage";
 import RegisterSuccessPage from "../pages/public/RegisterSuccessPage";
@@ -12,6 +13,8 @@ import StoreApplyPage from "../pages/store/StoreApplyPage";
 import StoreCompleteProfilePage from "../pages/store/StoreCompleteProfilePage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import EmployeeDashboard from "../pages/store/EmployeeDashboard";
+import StoreOnboardingRetryPage from "../pages/store/StoreOnboardingRetryPage";
+import EmployeeInvitationPage from "../pages/store/EmployeeInvitationPage";
 
 export default function AppRouter() {
   return (
@@ -19,17 +22,11 @@ export default function AppRouter() {
       <Route path="/" element={<HomePage />} />
       <Route path="/books/:id" element={<BookDetailsPage />} />
       <Route path="/search" element={<SearchResultsPage />} />
+      <Route path="/stores" element={<StoresPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/register-success" element={<RegisterSuccessPage />} />
 
-      {/* User - ROLE_USun dev
-npm error code EJSONPARSE
-npm error JSON.parse Invalid package.json: JSONParseError: Expected double-quoted property name in JSON at position 415 (line 19 column 1) while parsing near "...ct-dom\": \"^19.2.5\",\n<<<<<<< HEAD\n=======..."
-npm error JSON.parse Failed to parse JSON data.
-npm error JSON.parse Note: package.json must be actual JSON, not just JavaScript.
-npm error A complete log of this run can be found in: /home/mesale/.npm/_logs/2026-05-22T15_36_21_484Z-debug-0.log
-
-ER */}
+      {/* User - ROLE_USER */}
       <Route path="/dashboard" element={
         <ProtectedRoute requiredRole="ROLE_USER">
           <UserDashboard />
@@ -60,8 +57,18 @@ ER */}
           <StoreCompleteProfilePage />
         </ProtectedRoute>
       } />
+      <Route path="/onbording/retry" element={
+        <ProtectedRoute requiredRole="ROLE_STORE_ADMIN">
+          <StoreOnboardingRetryPage />
+        </ProtectedRoute>
+      } />
 
       {/* Employee - ROLE_EMPLOYEE */}
+      <Route path="/employee/invitation" element={
+        <ProtectedRoute requiredRole="ROLE_USER">
+          <EmployeeInvitationPage />
+        </ProtectedRoute>
+      } />
       <Route path="/employee/*" element={
         <ProtectedRoute requiredRole="ROLE_WORKER">
           <EmployeeDashboard />

@@ -1,10 +1,40 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/useAuth";
+import { useCallback, useEffect, useState } from "react";
+import Navbar from "../../components/Navbar";
 import api from "../../api/axiosInstance";
 import { unwrapItem, unwrapList } from "../../utils/apiHelpers";
 import { getBookDocumentUrl, getBookImageUrl } from "../../utils/book";
 import { FiPieChart, FiBook, FiBox, FiHome, FiClock, FiX, FiCheck } from "react-icons/fi";
+
+function ConfirmationModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDanger = false }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+      <div className="bg-background border border-surface-variant shadow-elevation-3 p-8 w-full max-w-sm rounded-sm">
+        <h3 className="headline-md text-primary mb-4">{title}</h3>
+        <p className="body-md text-secondary mb-8">{message}</p>
+        <div className="flex gap-4">
+          <button
+            onClick={onCancel}
+            className="flex-1 btn-secondary py-3 label-md hover:border-primary hover:text-primary transition-colors"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`flex-1 py-3 label-md border transition-colors ${
+              isDanger 
+                ? "btn-secondary text-error border-error/30 hover:bg-error/5" 
+                : "btn-primary hover:bg-white hover:text-primary hover:border-2 border-primary"
+            }`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function StatCard({ icon, label, value, sub }) {
   return (
@@ -64,8 +94,6 @@ function EmployeeSidebar({ branch, activeTab, setActiveTab }) {
 }
 
 export default function EmployeeDashboard() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [branch, setBranch] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -90,25 +118,7 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-on-background font-body-md antialiased pt-24 pb-16">
-      {/* Navbar exactly like StoreDashboard */}
-      <header className="fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md bg-background/80 border-b border-surface-variant">
-        <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
-          <button
-            onClick={() => navigate("/")}
-            className="font-display font-bold text-3xl text-primary tracking-tight"
-          >
-            The<span className="italic text-secondary font-medium ml-2">Inkwell.</span>
-          </button>
-          <div className="flex items-center gap-4">
-            <span className="body-md text-secondary hidden sm:block">{user?.email}</span>
-            <img
-              src={`https://i.pravatar.cc/40?u=${user?.email}`}
-              className="w-10 h-10 rounded-full border border-outline-variant"
-              alt=""
-            />
-          </div>
-        </div>
-      </header>
+      <Navbar mode="dashboard" badgeText="Employee" />
 
       <div className="max-w-7xl mx-auto px-8 py-8 flex flex-col lg:flex-row gap-12 w-full">
         {/* Sidebar with fix for overlapping on smaller screens */}
@@ -129,20 +139,23 @@ export default function EmployeeDashboard() {
     </div>
   );
 }
-
 function OverviewTab({ branch }) {
   const [stats, setStats] = useState({ totalBooks: 0, pendingOrders: 0 });
 
   useEffect(() => {
-    if (!branch) return;
+    if (!branch) {
+      return;
+    }
     // Fetch stats
     Promise.all([
-      api.get(`/books/store/branch/${branch.id}`),
-      api.get("/orders/branch/pending")
-    ]).then(([booksRes, ordersRes]) => {
+      api.get(`/books/store/branch/${branch.id}/count`),
+      api.get(`/orders/branch/${branch.id}/count`)
+    ]).then(([countRes, ordersRes]) => {
+      const rawCount = countRes?.data?.data ?? countRes?.data ?? 0;
+      const rawOrderCount = ordersRes?.data?.data ?? ordersRes?.data ?? 0;
       setStats({
-        totalBooks: unwrapList(booksRes).length,
-        pendingOrders: unwrapList(ordersRes).length
+        totalBooks: Number(rawCount),
+        pendingOrders: Number(rawOrderCount)
       });
     });
   }, [branch]);
@@ -189,15 +202,37 @@ function InventoryTab({ branch }) {
   const [addLoading, setAddLoading] = useState(false);
   const [form, setForm] = useState({ title: "", author: "", category: "", price: "", condition: "NEW", description: "" });
   const [files, setFiles] = useState({ imageFile: null });
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    confirmText: "",
+    onConfirm: null,
+    isDanger: false
+  });
+
+  const showConfirm = ({ title, message, confirmText, onConfirm, isDanger = false }) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      confirmText,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+      isDanger
+    });
+  };
+
+  const closeConfirm = () => {
+    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const CATEGORIES = ["Fiction", "Non-Fiction", "Academic", "Children", "Biography", "History", "Science", "Self-Help"];
 
-  useEffect(() => {
+  const fetchBooks = useCallback(async () => {
     if (!branch) return;
-    fetchBooks();
-  }, [branch]);
-
-  const fetchBooks = async () => {
     setLoading(true);
     try {
       const res = await api.get(`/books/store/branch/${branch.id}`);
@@ -205,7 +240,11 @@ function InventoryTab({ branch }) {
     } catch (err) {
       console.error("Failed to fetch books", err);
     } finally { setLoading(false); }
-  };
+  }, [branch]);
+
+  useEffect(() => {
+    fetchBooks();
+  }, [fetchBooks]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -221,8 +260,10 @@ function InventoryTab({ branch }) {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
-      const newBook = unwrapItem(res.data);
-      setBooks([newBook, ...books]);
+      const newBook = unwrapItem(res);
+      if (newBook) {
+        setBooks([newBook, ...books]);
+      }
       setShowAdd(false);
       setForm({ title: "", author: "", category: "", price: "", condition: "NEW", description: "" });
       setFiles({ imageFile: null });
@@ -231,14 +272,21 @@ function InventoryTab({ branch }) {
     } finally { setAddLoading(false); }
   };
 
-  const handleDelete = async (bookId) => {
-    if (!window.confirm("Are you sure you want to delete this title?")) return;
-    try {
-      await api.delete(`/books/store/${bookId}`);
-      setBooks(books.filter(b => b.id !== bookId));
-    } catch (err) {
-      console.error("Failed to delete book", err);
-    }
+  const handleDelete = (bookId) => {
+    showConfirm({
+      title: "Delete Book Title",
+      message: "Are you sure you want to permanently delete this book title? This action cannot be undone.",
+      confirmText: "Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/books/store/${bookId}`);
+          setBooks(books.filter(b => b.id !== bookId));
+        } catch (err) {
+          console.error("Failed to delete book", err);
+        }
+      }
+    });
   };
 
   return (
@@ -373,8 +421,8 @@ function InventoryTab({ branch }) {
                   <p className="label-md text-secondary uppercase tracking-wider">Status</p>
                   <span className={`inline-block mt-1 label-md uppercase tracking-wider px-2 py-0.5 border ${(book.status === "APPROVED" || (!book.status && book.approved)) ? "bg-primary/5 text-primary border-primary" :
                     book.status === "REJECTED" ? "bg-error/5 text-error border-error" :
-                    "bg-surface text-secondary border-outline-variant"
-                  }`}>
+                      "bg-surface text-secondary border-outline-variant"
+                    }`}>
                     {book.status ? book.status : (book.approved ? "APPROVED" : "PENDING")}
                   </span>
                 </div>
@@ -392,11 +440,22 @@ function InventoryTab({ branch }) {
           ))}
         </div>
       )}
+      {confirmModal.isOpen && (
+        <ConfirmationModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText={confirmModal.confirmText}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={closeConfirm}
+          isDanger={confirmModal.isDanger}
+        />
+      )}
     </div>
   );
 }
 
-function OrdersTab({ branch }) {
+function OrdersTab() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -404,11 +463,7 @@ function OrdersTab({ branch }) {
   const [pinLoading, setPinLoading] = useState(false);
   const [pinError, setPinError] = useState("");
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get("/orders/branch");
@@ -416,7 +471,11 @@ function OrdersTab({ branch }) {
     } catch (err) {
       console.error("Failed to fetch orders", err);
     } finally { setLoading(false); }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const handleConfirmDelivery = async (e) => {
     e.preventDefault();

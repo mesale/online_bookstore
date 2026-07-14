@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,7 +26,6 @@ public class StoreService {
 //    private final StoreOwnerRepository storeOwnerRepository;
     private final StoreEventPublisher storeEventPublisher;
     private final MinioService minioService;
-    private final EmailService emailService;
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -66,7 +66,11 @@ public class StoreService {
 
         log.info("Published CreateStoreOwnerEvent for storeId: {}", savedStore.getId());
 
-        emailService.sendCompleteProfileEmail(savedStore.getEmail(), savedStore.getStoreName());
+        CompleteProfileEmailEvent eventEmail = CompleteProfileEmailEvent.builder()
+                .toEmail(savedStore.getEmail())
+                .storeName(savedStore.getStoreName())
+                .build();
+        storeEventPublisher.publishCompleteProfileEmail(eventEmail);
 
         log.info("Successfully created store and store owner for applicationId: {} and email sent to: {}",
                 event.getApplicationId(), savedStore.getEmail());
@@ -156,6 +160,45 @@ public class StoreService {
 
     }
 
+    @Transactional
+    public void handleStripeAccountUpdated(StripeAccountUpdatedEvent event){
+        storeRepository.findByStripeAccountId(event.getStripeAccountId())
+                .ifPresentOrElse(store -> {
+                    store.setOnboardingComplete(event.isOnboardingComplete());
+                    storeRepository.save(store);
+                    log.info("Store {} onboardingComplete updated to {}",
+                            store.getId(), event.isOnboardingComplete());
+                }, () -> log.warn("No store found for Stripe account {}", event.getStripeAccountId()));
+
+    }
+
+    @Transactional
+    public void handleSubscriptionActivated(SubscriptionActivatedEvent event) {
+        storeRepository.findById(event.getStoreId())
+                .ifPresentOrElse(store -> {
+                    store.setPlan(Store.Plan.PREMIUM);
+                    storeRepository.save(store);
+                    log.info("Store {} upgraded to PREMIUM plan (subscription: {})",
+                            event.getStoreId(), event.getStripeSubscriptionId());
+                }, () -> log.warn("Store not found for subscription activation: {}", event.getStoreId()));
+    }
+
+    @Transactional
+    public void handleSubscriptionCancelled(SubscriptionCancelledEvent event) {
+        storeRepository.findById(event.getStoreId())
+                .ifPresentOrElse(store -> {
+                    store.setPlan(Store.Plan.FREE);
+                    storeRepository.save(store);
+                    log.info("Store {} downgraded to FREE plan (subscription cancelled: {})",
+                            event.getStoreId(), event.getStripeSubscriptionId());
+                }, () -> log.warn("Store not found for subscription cancellation: {}", event.getStoreId()));
+    }
+
+    public Boolean getOnboardingStatus(UUID storeId){
+        return storeRepository.findById(storeId)
+                .orElseThrow(() -> new ResourceNotFoundException("store not found"))
+                .isOnboardingComplete();
+    }
     public String getStripeAccountId(UUID storeId){
 
         Store store = storeRepository.findById(storeId)
@@ -174,7 +217,22 @@ public class StoreService {
 
     }
 
+    public String getStorePlan(UUID storeId){
 
+        Store store = storeRepository
+                .findById(storeId).orElseThrow(() -> new ResourceNotFoundException("Store Not Found"));
+
+        return store.getPlan().name();
+
+    }
+
+    public List<StoreSummaryResponse> getStores(){
+
+        return storeRepository.findAll()
+                .stream().map(this::toStoreSummaryResponse)
+                .toList();
+
+    }
 
     public StoreResponse getMyStore(UUID storeId){
 
@@ -219,7 +277,8 @@ public class StoreService {
                 store.getPlan().name(),
                 store.getVerificationStatus().name(),
                 store.getRejectionReason(),
-                store.getCreatedAt()
+                store.getCreatedAt(),
+                List.of()  // documents not needed for store-owner self-view
         );
     }
 

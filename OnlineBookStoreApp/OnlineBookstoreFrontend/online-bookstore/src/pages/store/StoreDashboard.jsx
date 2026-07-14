@@ -1,16 +1,50 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/useAuth";
+import Navbar from "../../components/Navbar";
 import api from "../../api/axiosInstance";
 import { unwrapItem, unwrapList } from "../../utils/apiHelpers";
 import { getBookDocumentUrl, getBookImageUrl } from "../../utils/book";
 import {
   FiPieChart, FiBook, FiBox, FiHome, FiUsers, FiTrendingUp, FiSettings,
-  FiGlobe, FiStar, FiMapPin, FiPhone, FiDollarSign, FiBriefcase, FiTrendingDown, FiUser,
-  FiClock, FiCheck
+  FiGlobe, FiStar, FiMapPin, FiPhone, FiDollarSign, FiUser,
+  FiClock, FiCheck, FiExternalLink, FiAlertCircle, FiCheckCircle, FiPercent,
+  FiX, FiLock, FiCreditCard, FiZap, FiAlertTriangle, FiCalendar
 } from "react-icons/fi";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 
-function StatCard({ icon, label, value, sub, color = "bg-primary text-on-primary" }) {
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
+function ConfirmationModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDanger = false }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+      <div className="bg-background border border-surface-variant shadow-elevation-3 p-8 w-full max-w-sm rounded-sm">
+        <h3 className="headline-md text-primary mb-4">{title}</h3>
+        <p className="body-md text-secondary mb-8">{message}</p>
+        <div className="flex gap-4">
+          <button
+            onClick={onCancel}
+            className="flex-1 btn-secondary py-3 label-md hover:border-primary hover:text-primary transition-colors"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`flex-1 py-3 label-md border transition-colors ${isDanger
+              ? "btn-secondary text-error border-error/30 hover:bg-error/5"
+              : "btn-primary hover:bg-white hover:text-primary hover:border-2 border-primary"
+              }`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, sub }) {
   return (
     <div className="bg-surface-container-lowest border border-surface-variant p-6 shadow-elevation-1 flex items-center gap-4">
       <div className={`w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center text-2xl flex-shrink-0 bg-surface-variant`}>
@@ -26,6 +60,21 @@ function StatCard({ icon, label, value, sub, color = "bg-primary text-on-primary
 }
 
 function StoreSidebar({ store, activeTab, setActiveTab, navigate }) {
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState(null);
+  // null = checking, true = complete, false = incomplete
+  const [onboardingComplete, setOnboardingComplete] = useState(null);
+
+  useEffect(() => {
+    api.get("/stores/onboarding-status")
+      .then((res) => {
+        // Support { data: true }, { data: { data: true } }, or a plain boolean
+        const val = res.data?.data ?? res.data;
+        setOnboardingComplete(val === true);
+      })
+      .catch(() => setOnboardingComplete(false));
+  }, []);
+
   const NAV = [
     { id: "overview", icon: <FiPieChart />, label: "Dashboard" },
     { id: "books", icon: <FiBook />, label: "Inventory" },
@@ -35,6 +84,25 @@ function StoreSidebar({ store, activeTab, setActiveTab, navigate }) {
     { id: "earnings", icon: <FiTrendingUp />, label: "Analytics" },
     { id: "settings", icon: <FiSettings />, label: "Settings" },
   ];
+
+  const handleStripeLogin = async () => {
+    setStripeLoading(true);
+    setStripeError(null);
+    try {
+      const res = await api.post("/payments/store/dashboard-link");
+      const url = res.data?.data?.url || res.data?.data || res.data?.url || res.data;
+      if (url && typeof url === "string") {
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        setStripeError("Could not retrieve dashboard link.");
+      }
+    } catch (err) {
+      console.error("Failed to get Stripe dashboard link", err);
+      setStripeError("Failed to open Stripe dashboard.");
+    } finally {
+      setStripeLoading(false);
+    }
+  };
 
   return (
     <aside className="w-64 bg-surface-container-lowest border border-surface-variant shadow-elevation-1 p-6 flex flex-col gap-2 sticky top-28 self-start">
@@ -80,8 +148,46 @@ function StoreSidebar({ store, activeTab, setActiveTab, navigate }) {
         </button>
       ))}
 
-      {/* Bottom — view store */}
-      <div className="mt-auto pt-6 border-t border-surface-variant">
+      {/* Bottom — stripe + view store */}
+      <div className="mt-auto pt-6 border-t border-surface-variant flex flex-col gap-3">
+        {/* Onboarding status — show appropriate button */}
+        {onboardingComplete === null ? (
+          /* Still checking — subtle skeleton */
+          <div className="w-full h-11 bg-surface-variant animate-pulse" />
+        ) : onboardingComplete ? (
+          /* Onboarding done — show Stripe Dashboard */
+          <>
+            <button
+              id="stripe-dashboard-btn"
+              onClick={handleStripeLogin}
+              disabled={stripeLoading}
+              className="w-full flex items-center gap-3 px-4 py-3 label-md bg-[#635BFF] text-white hover:bg-[#4f47d6] disabled:opacity-60 transition-colors border border-[#635BFF] hover:border-[#4f47d6]"
+            >
+              <span className="text-lg">
+                {stripeLoading ? (
+                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <FiExternalLink />
+                )}
+              </span>
+              {stripeLoading ? "Opening..." : "Stripe Dashboard"}
+            </button>
+            {stripeError && (
+              <p className="label-md text-error px-1">{stripeError}</p>
+            )}
+          </>
+        ) : (
+          /* Onboarding incomplete — prompt to finish */
+          <button
+            id="complete-onboarding-btn"
+            onClick={() => navigate("/onbording/retry")}
+            className="w-full flex items-center gap-3 px-4 py-3 label-md bg-warning/10 text-warning border border-warning/40 hover:bg-warning/20 hover:border-warning transition-colors"
+          >
+            <span className="text-lg"><FiAlertCircle /></span>
+            Complete Onboarding
+          </button>
+        )}
+
         <button
           onClick={() => navigate("/")}
           className="w-full flex items-center gap-3 px-4 py-3 label-md text-secondary hover:bg-surface-variant hover:text-primary transition-colors border border-outline-variant hover:border-primary"
@@ -93,7 +199,7 @@ function StoreSidebar({ store, activeTab, setActiveTab, navigate }) {
   );
 }
 
-function OverviewTab({ store, branches, stats }) {
+function OverviewTab({ store, branches, stats, onUpgrade, subscription }) {
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -149,24 +255,37 @@ function OverviewTab({ store, branches, stats }) {
       </div>
 
       {/* Plan info */}
-      <div className={`p-8 flex items-center gap-6 border shadow-elevation-1 ${store?.plan === "PREMIUM"
-        ? "bg-primary/5 border-primary"
-        : "bg-surface-container-lowest border-outline-variant"
+      <div className={`p-8 flex items-center gap-6 border shadow-elevation-1 ${
+        store?.plan === "PREMIUM"
+          ? "bg-primary/5 border-primary"
+          : "bg-surface-container-lowest border-outline-variant"
         }`}>
-        <span className="text-4xl">{store?.plan === "PREMIUM" ? <FiStar /> : <FiBox />}</span>
+        <span className="text-4xl text-primary">{store?.plan === "PREMIUM" ? <FiStar /> : <FiBox />}</span>
         <div className="flex-1">
-          <p className="headline-md text-primary">
-            {store?.plan === "PREMIUM" ? "Premium Plan" : "Free Plan"}
-          </p>
-          <p className="body-lg text-secondary mt-2">
+          <div className="flex items-center gap-3 mb-1">
+            <p className="headline-md text-primary">
+              {store?.plan === "PREMIUM" ? "Premium Plan" : "Free Plan"}
+            </p>
+            {store?.plan === "PREMIUM" && subscription?.cancelAtPeriodEnd && (
+              <span className="label-sm px-2 py-0.5 border border-amber-400 bg-amber-50 text-amber-700">
+                Cancels {subscription.currentPeriodEnd
+                  ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                  : "at period end"}
+              </span>
+            )}
+          </div>
+          <p className="body-lg text-secondary">
             {store?.plan === "PREMIUM"
               ? "2% commission per sale · Priority support · Advanced analytics"
               : "5% commission per sale · Standard support · Basic analytics"}
           </p>
         </div>
         {store?.plan !== "PREMIUM" && (
-          <button className="btn-primary px-8 py-3 label-md whitespace-nowrap">
-            Upgrade to Premium
+          <button
+            onClick={onUpgrade}
+            className="btn-primary px-8 py-3 label-md whitespace-nowrap flex items-center gap-2"
+          >
+            <FiZap /> Upgrade to Premium
           </button>
         )}
       </div>
@@ -192,7 +311,7 @@ function BranchesTab({ branches, setBranches }) {
     try {
       const res = await api.post(`/stores/me/branch`, form);
       const newBranch = unwrapItem(res);
-      setBranches((prev) => [...prev, newBranch]);
+      setBranches((prev) => [...prev, { ...newBranch, bookCount: 0, orderCount: 0 }]);
       setShowAdd(false);
       setForm({ branchName: "", region: "", city: "", address: "", phone: "" });
     } catch (err) {
@@ -321,6 +440,33 @@ function BooksTab({ branches }) {
   const [showAdd, setShowAdd] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [files, setFiles] = useState({ imageFile: null, documentFile: null });
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    confirmText: "",
+    onConfirm: null,
+    isDanger: false
+  });
+
+  const showConfirm = ({ title, message, confirmText, onConfirm, isDanger = false }) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      confirmText,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+      isDanger
+    });
+  };
+
+  const closeConfirm = () => {
+    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   const [form, setForm] = useState({
     title: "", author: "", category: "", price: "",
     condition: "NEW", branchId: "",
@@ -342,9 +488,6 @@ function BooksTab({ branches }) {
       setBooksByBranch(results);
     }).finally(() => setLoading(false));
   }, [branches]);
-
-  // Helper: total book count across all branches
-  const totalBooks = booksByBranch.reduce((sum, g) => sum + g.books.length, 0);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -378,30 +521,45 @@ function BooksTab({ branches }) {
     setFiles({ imageFile: null, documentFile: null });
   };
 
-  const handleDelete = async (bookId) => {
-    if (!confirm("Delete this book?")) return;
-    try {
-      await api.delete(`/books/${bookId}`);
-      setBooksByBranch((prev) =>
-        prev.map((g) => ({ ...g, books: g.books.filter((b) => b.id !== bookId) }))
-      );
-    } catch (err) {
-      console.error("Failed to delete book", err);
-    }
+  const handleDelete = (bookId) => {
+    showConfirm({
+      title: "Delete Book Title",
+      message: "Are you sure you want to permanently delete this book title? This action cannot be undone.",
+      confirmText: "Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/books/${bookId}`);
+          setBooksByBranch((prev) =>
+            prev.map((g) => ({ ...g, books: g.books.filter((b) => b.id !== bookId) }))
+          );
+        } catch (err) {
+          console.error("Failed to delete book", err);
+        }
+      }
+    });
   };
 
-  const handleApprove = async (bookId) => {
-    try {
-      await api.put(`/books/store/${bookId}/approve`);
-      setBooksByBranch((prev) =>
-        prev.map((g) => ({
-          ...g,
-          books: g.books.map((b) => b.id === bookId ? { ...b, approved: true, status: "APPROVED" } : b),
-        }))
-      );
-    } catch (err) {
-      console.error("Failed to approve book", err);
-    }
+  const handleApprove = (bookId) => {
+    showConfirm({
+      title: "Approve Book",
+      message: "Are you sure you want to approve this book title?",
+      confirmText: "Approve",
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          await api.put(`/books/store/${bookId}/approve`);
+          setBooksByBranch((prev) =>
+            prev.map((g) => ({
+              ...g,
+              books: g.books.map((b) => b.id === bookId ? { ...b, approved: true, status: "APPROVED" } : b),
+            }))
+          );
+        } catch (err) {
+          console.error("Failed to approve book", err);
+        }
+      }
+    });
   };
 
   const handleReject = async (bookId) => {
@@ -688,30 +846,100 @@ function BooksTab({ branches }) {
           ))}
         </div>
       )}
+      {confirmModal.isOpen && (
+        <ConfirmationModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText={confirmModal.confirmText}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={closeConfirm}
+          isDanger={confirmModal.isDanger}
+        />
+      )}
     </div>
   );
 }
 
-function EarningsTab({ store }) {
+function EarningsTab({ store, orders = [], branches = [] }) {
   const commission = store?.plan === "PREMIUM" ? 2 : 5;
+  const commissionMultiplier = store?.plan === "PREMIUM" ? 0.98 : 0.95;
+
+  const deliveredOrders = orders.filter((o) => o.status === "DELIVERED");
+  const totalRevenue = deliveredOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0) * commissionMultiplier;
+
+  // Branch map helper to show branch names
+  const branchMap = branches.reduce((acc, b) => {
+    acc[b.id] = b.branchName;
+    return acc;
+  }, {});
+
   return (
     <div className="flex flex-col gap-8">
-      <h2 className="display-sm text-primary border-b border-surface-variant pb-6">Earnings Report</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <StatCard icon={<FiDollarSign />} label="Total Revenue" value="ETB 0" />
-        <StatCard icon={<FiBriefcase />} label="Total Payouts" value="ETB 0" />
-        <StatCard icon={<FiTrendingDown />} label="Commission Rate" value={`${commission}%`} sub={`${store?.plan || "FREE"} plan`} />
+      <div className="border-b border-surface-variant pb-6">
+        <h2 className="display-sm text-primary">Analytics Overview</h2>
+        <p className="body-lg text-secondary mt-2">Monitor net earnings, commission rates, and order fulfillment status.</p>
       </div>
-      <div className="bg-surface-container-lowest border border-surface-variant p-16 text-center shadow-elevation-1">
-        <p className="text-5xl mb-6 opacity-80 flex justify-center"><FiPieChart /></p>
-        <p className="headline-md text-primary">Earnings log unavailable</p>
-        <p className="body-lg text-secondary mt-2">Once you receive orders, your revenue breakdown will display here.</p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <StatCard icon={<FiDollarSign />} label="Net Revenue" value={`ETB ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+        <StatCard icon={<FiCheckCircle />} label="Delivered Orders" value={`${deliveredOrders.length}`} />
+        <StatCard icon={<FiPercent />} label="Commission Rate" value={`${commission}%`} sub={`${store?.plan || "FREE"} plan`} />
+      </div>
+
+      <div className="bg-surface-container-lowest border border-surface-variant shadow-elevation-1 p-8">
+        <h3 className="headline-md text-primary mb-6 border-b border-surface-variant pb-4">Delivered Orders History</h3>
+        {deliveredOrders.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-5xl mb-6 opacity-80 flex justify-center text-secondary"><FiPieChart /></p>
+            <p className="headline-md text-primary">No delivered orders yet</p>
+            <p className="body-lg text-secondary mt-2">When customer orders are fulfilled and delivered, they will appear here.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-surface-variant label-md text-secondary">
+                  <th className="py-4 font-semibold">Order ID</th>
+                  <th className="py-4 font-semibold">Date</th>
+                  <th className="py-4 font-semibold">Branch</th>
+                  <th className="py-4 font-semibold text-right">Gross Price</th>
+                  <th className="py-4 font-semibold text-right">Payout (Net)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-variant body-md text-primary">
+                {deliveredOrders.map((o) => {
+                  const gross = o.totalPrice || 0;
+                  const net = gross * commissionMultiplier;
+                  const dateFormatted = o.createdAt
+                    ? new Date(o.createdAt).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : "N/A";
+                  return (
+                    <tr key={o.id} className="hover:bg-surface-variant/10 transition-colors">
+                      <td className="py-4 font-mono text-sm tracking-wider text-secondary">
+                        {o.id.substring(0, 8)}...
+                      </td>
+                      <td className="py-4">{dateFormatted}</td>
+                      <td className="py-4">{branchMap[o.branchId] || "Unknown Branch"}</td>
+                      <td className="py-4 text-right">ETB {gross.toFixed(2)}</td>
+                      <td className="py-4 text-right font-semibold text-primary">ETB {net.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function EmployeesTab({ storeId, branches }) {
+function EmployeesTab({ branches }) {
   const [employeesByBranch, setEmployeesByBranch] = useState([]);
   const [loading, setLoading] = useState(true);
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -726,7 +954,11 @@ function EmployeesTab({ storeId, branches }) {
   const [showInviteForBranchId, setShowInviteForBranchId] = useState(null);
 
   useEffect(() => {
-    if (!branches?.length) return;
+    if (!branches?.length) {
+      setEmployeesByBranch([]);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     Promise.all(
@@ -802,11 +1034,11 @@ function EmployeesTab({ storeId, branches }) {
               <div key={i} className="h-16 bg-surface border border-outline-variant animate-pulse" />
             ))}
           </div>
-        ) : employeesByBranch.every(g => g.employees.length === 0) ? (
+        ) : employeesByBranch.length === 0 ? (
           <div className="p-16 text-center">
             <p className="text-5xl mb-6 opacity-80 flex justify-center"><FiUsers /></p>
-            <p className="headline-md text-primary">No personnel yet</p>
-            <p className="body-lg text-secondary mt-2">Invited team members will appear here.</p>
+            <p className="headline-md text-primary">No branches yet</p>
+            <p className="body-lg text-secondary mt-2">Create a branch first to start adding personnel.</p>
           </div>
         ) : (
           <div className="flex flex-col">
@@ -1185,10 +1417,6 @@ function OrdersTab({ branches }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // Resolve branch name from branchId
-  const branchName = (branchId) =>
-    branches.find((b) => b.id === branchId)?.branchName || "Unknown Branch";
-
   // Apply filters
   const filtered = orders.filter((o) => {
     const statusOk = filterStatus === "ALL" || o.status?.toUpperCase() === filterStatus;
@@ -1378,17 +1606,223 @@ function OrdersTab({ branches }) {
   );
 }
 
+// ── Premium Subscription Modal ─────────────────────────────────────────────
+function SubscriptionPaymentForm({ onSuccess, onError }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setSubmitting(true);
+    setPaymentError("");
+    try {
+      // Confirm the SetupIntent to get the payment method
+      const { error, setupIntent } = await stripe.confirmSetup({
+        elements,
+        confirmParams: { return_url: `${window.location.origin}/store/dashboard` },
+        redirect: "if_required",
+      });
+      if (error) {
+        setPaymentError(error.message || "Payment setup failed.");
+        onError && onError(error.message);
+      } else if (setupIntent?.payment_method) {
+        onSuccess(setupIntent.payment_method);
+      } else {
+        setPaymentError("Could not retrieve payment method. Please try again.");
+      }
+    } catch (err) {
+      setPaymentError(err.message || "An unexpected error occurred.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <PaymentElement />
+      {paymentError && (
+        <div className="flex items-center gap-3 bg-error/10 border border-error/20 p-4 text-error body-md">
+          <FiAlertTriangle /> {paymentError}
+        </div>
+      )}
+      <button
+        type="submit"
+        disabled={!stripe || submitting}
+        className="w-full btn-primary py-4 label-md disabled:opacity-60 flex items-center justify-center gap-2"
+      >
+        {submitting ? (
+          <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</>
+        ) : (
+          <><FiCreditCard /> Subscribe — $29/month</>
+        )}
+      </button>
+    </form>
+  );
+}
+
+function PremiumSubscriptionModal({ onClose, onSubscribed }) {
+  const [phase, setPhase] = useState("idle"); // idle | loading | ready | confirming | success | error
+  const [setupSecret, setSetupSecret] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    setPhase("loading");
+    api.post("/payments/subscription/setup")
+      .then((res) => {
+        const data = res.data?.data;
+        setSetupSecret(data?.setupIntentClientSecret);
+        setPhase("ready");
+      })
+      .catch((err) => {
+        setErrorMsg(err.response?.data?.message || "Failed to set up subscription.");
+        setPhase("error");
+      });
+  }, []);
+
+  const handlePaymentSuccess = async (paymentMethodId) => {
+    setPhase("confirming");
+    try {
+      await api.post("/payments/subscription/confirm", { paymentMethodId });
+      setPhase("success");
+      onSubscribed && onSubscribed();
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || "Failed to activate subscription.");
+      setPhase("error");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 flex items-center justify-center px-4" onClick={onClose}>
+      <div
+        className="bg-background border border-surface-variant shadow-elevation-3 p-8 w-full max-w-lg rounded-sm"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-surface-variant">
+          <div>
+            <h2 className="display-sm text-primary flex items-center gap-3">
+              <FiZap className="text-primary" /> Upgrade to Premium
+            </h2>
+            <p className="body-md text-secondary mt-1">Unlock lower commissions and priority support.</p>
+          </div>
+          <button onClick={onClose} className="text-secondary hover:text-primary transition-colors"><FiX size={22} /></button>
+        </div>
+
+        {/* Plan comparison strip */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          {[
+            { label: "Commission", free: "5%", premium: "2%" },
+            { label: "Monthly Fee", free: "Free", premium: "$29" },
+            { label: "Analytics", free: "Basic", premium: "Advanced" },
+            { label: "Support", free: "Standard", premium: "Priority" },
+          ].map((row) => (
+            <div key={row.label} className="flex items-center justify-between p-3 border border-surface-variant bg-surface">
+              <span className="label-md text-secondary">{row.label}</span>
+              <span className="label-md text-primary font-bold">{row.premium}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Content by phase */}
+        {phase === "success" ? (
+          <div className="text-center py-8 flex flex-col items-center gap-6">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl">
+              <FiCheckCircle />
+            </div>
+            <div>
+              <p className="headline-md text-primary">Welcome to Premium!</p>
+              <p className="body-md text-secondary mt-2">Your plan will be updated shortly. Enjoy lower commissions and priority support.</p>
+            </div>
+            <button onClick={onClose} className="btn-primary px-8 py-3 label-md">Done</button>
+          </div>
+        ) : phase === "loading" ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-4 text-secondary">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="body-md">Setting up secure payment...</p>
+          </div>
+        ) : phase === "error" ? (
+          <div className="flex flex-col items-center gap-6 py-8">
+            <div className="flex items-center gap-3 bg-error/10 border border-error/20 p-4 text-error body-md w-full">
+              <FiAlertTriangle /> {errorMsg}
+            </div>
+            <button onClick={onClose} className="btn-secondary px-8 py-3 label-md">Close</button>
+          </div>
+        ) : phase === "confirming" ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-4 text-secondary">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="body-md">Activating your subscription...</p>
+          </div>
+        ) : setupSecret ? (
+          <>
+            <Elements
+              stripe={stripePromise}
+              options={{
+                clientSecret: setupSecret,
+                appearance: {
+                  theme: "stripe",
+                  variables: { colorPrimary: "#E63946", borderRadius: "4px", fontFamily: "DM Sans, sans-serif" },
+                },
+              }}
+            >
+              <SubscriptionPaymentForm
+                onSuccess={handlePaymentSuccess}
+                onError={(msg) => { setErrorMsg(msg); setPhase("error"); }}
+              />
+            </Elements>
+            <div className="mt-6 flex items-center gap-2 text-xs text-secondary border-t border-surface-variant pt-4">
+              <FiLock /><span>Secured by Stripe. Cancel anytime from Settings.</span>
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function StoreDashboard() {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [store, setStore] = useState(null);
   const [branches, setBranches] = useState([]);
   const [stats, setStats] = useState(null);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [subscription, setSubscription] = useState(null);
+  const [cancellingSubscription, setCancellingSubscription] = useState(false);
+
+  // Fetch subscription status
+  useEffect(() => {
+    api.get("/payments/subscription/status")
+      .then((res) => setSubscription(res.data?.data))
+      .catch(() => setSubscription(null));
+  }, []);
+
+  const handleSubscribed = () => {
+    // Refresh store and subscription after upgrade
+    api.get("/stores/me").then((res) => setStore(unwrapItem(res))).catch(() => {});
+    api.get("/payments/subscription/status").then((res) => setSubscription(res.data?.data)).catch(() => {});
+    setShowSubscriptionModal(false);
+  };
+
+  const handleCancelSubscription = async () => {
+    setCancellingSubscription(true);
+    try {
+      const res = await api.delete("/payments/subscription/cancel");
+      setSubscription(res.data?.data);
+    } catch (err) {
+      console.error("Failed to cancel subscription", err);
+    } finally {
+      setCancellingSubscription(false);
+    }
+  };
 
   useEffect(() => {
+    setLoading(true);
     // Fetch store info using keycloak_id
     api.get("/stores/me")
       .then((res) => {
@@ -1397,17 +1831,81 @@ export default function StoreDashboard() {
         return s;
       })
       .then((s) => {
-        if (!s?.id) return;
-        // Fetch branches
-        api.get(`/stores/me/branch`)
-          .then((r) => setBranches(unwrapList(r)))
-          .catch(() => { });
-        // Fetch stats
-        api.get(`/stores/${s.id}/stats`)
-          .then((r) => setStats(unwrapItem(r)))
-          .catch(() => { });
+        if (!s?.id) {
+          setLoading(false);
+          return;
+        }
+
+        // Fetch branches, all store orders, and backend revenue in parallel
+        return Promise.all([
+          api.get(`/stores/me/branch`),
+          api.get(`/orders/store`),
+          api.get(`/orders/store/${s.id}/revenue`).catch(() => ({ data: { data: 0 } }))
+        ])
+          .then(async ([branchRes, ordersRes]) => {
+            const branchList = unwrapList(branchRes);
+            const orderList = unwrapList(ordersRes);
+
+            // 1. Determine commission rate based on store plan (PREMIUM = 2% fee -> 98% kept, FREE = 5% fee -> 95% kept)
+            const commissionMultiplier = s?.plan === "PREMIUM" ? 0.98 : 0.95;
+
+            // 2. Calculate active orders count (status: PENDING, PAID, SHIPPED)
+            const activeOrders = orderList.filter(
+              (o) => o.status === "PENDING" || o.status === "PAID" || o.status === "SHIPPED"
+            ).length;
+
+            // 3. Calculate total revenue locally using correct commission rate
+            const calculatedTotalRevenue = orderList
+              .filter((o) => o.status === "DELIVERED")
+              .reduce((sum, o) => sum + (o.totalPrice || 0), 0) * commissionMultiplier;
+
+            // 4. Process branches
+            let totalBooks = 0;
+            const updatedBranches = await Promise.all(
+              branchList.map(async (branch) => {
+                let bookCount = 0;
+                try {
+                  const bcRes = await api.get(`/books/store/branch/${branch.id}/count`);
+                  bookCount = typeof bcRes.data?.data === "number" ? bcRes.data.data : 0;
+                } catch (e) {
+                  console.error("Error fetching book count for branch", branch.id, e);
+                }
+                totalBooks += bookCount;
+
+                // Branch revenue: only when orders are DELIVERED, multiplied by commissionMultiplier
+                const branchDeliveredOrders = orderList.filter(
+                  (o) => o.branchId === branch.id && o.status === "DELIVERED"
+                );
+                const branchRawRevenue = branchDeliveredOrders.reduce(
+                  (sum, o) => sum + (o.totalPrice || 0),
+                  0
+                );
+                const branchRevenue = branchRawRevenue * commissionMultiplier;
+
+                // Total order count for this branch
+                const branchOrderCount = orderList.filter((o) => o.branchId === branch.id).length;
+
+                return {
+                  ...branch,
+                  bookCount,
+                  orderCount: branchOrderCount,
+                  revenue: branchRevenue
+                };
+              })
+            );
+
+            setBranches(updatedBranches);
+            setOrders(orderList);
+            setStats({
+              revenue: calculatedTotalRevenue,
+              totalOrders: activeOrders,
+              totalBooks: totalBooks
+            });
+          });
       })
-      .catch(() => { })
+      .catch((err) => {
+        console.error("Error initializing dashboard data:", err);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -1423,33 +1921,120 @@ export default function StoreDashboard() {
   }
 
   const TABS = {
-    overview: <OverviewTab store={store} branches={branches} stats={stats} />,
+    overview: <OverviewTab store={store} branches={branches} stats={stats} onUpgrade={() => setShowSubscriptionModal(true)} subscription={subscription} />,
     branches: <BranchesTab branches={branches} setBranches={setBranches} />,
     books: <BooksTab branches={branches} />,
-    earnings: <EarningsTab store={store} />,
+    earnings: <EarningsTab store={store} orders={orders} branches={branches} />,
     orders: <OrdersTab branches={branches} />,
     employees: <EmployeesTab storeId={store?.id} branches={branches} />,
     settings: (
-      <div className="bg-surface-container-lowest border border-surface-variant shadow-elevation-1 p-8">
-        <h2 className="display-sm text-primary mb-8 border-b border-surface-variant pb-4">Store Metadata</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
-          {[
-            { label: "Store Name", value: store?.storeName },
-            { label: "Email", value: store?.email },
-            { label: "Phone", value: store?.phone },
-            { label: "Region", value: store?.region },
-            { label: "City", value: store?.city },
-            { label: "Plan", value: store?.plan },
-            { label: "TIN", value: store?.tin },
-            { label: "Reg. Number", value: store?.businessRegNumber },
-            { label: "Bank", value: store?.bankName },
-            { label: "Verification", value: store?.verificationStatus },
-          ].map((item) => (
-            <div key={item.label} className="border-b border-outline-variant/30 pb-2">
-              <p className="label-md text-secondary uppercase tracking-wider">{item.label}</p>
-              <p className="headline-sm text-primary mt-2">{item.value || "—"}</p>
+      <div className="flex flex-col gap-8">
+        {/* Store Metadata */}
+        <div className="bg-surface-container-lowest border border-surface-variant shadow-elevation-1 p-8">
+          <h2 className="display-sm text-primary mb-8 border-b border-surface-variant pb-4">Store Metadata</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+            {[
+              { label: "Store Name", value: store?.storeName },
+              { label: "Email", value: store?.email },
+              { label: "Phone", value: store?.phone },
+              { label: "Region", value: store?.region },
+              { label: "City", value: store?.city },
+              { label: "Plan", value: store?.plan },
+              { label: "TIN", value: store?.tin },
+              { label: "Reg. Number", value: store?.businessRegNumber },
+              { label: "Bank", value: store?.bankName },
+              { label: "Verification", value: store?.verificationStatus },
+            ].map((item) => (
+              <div key={item.label} className="border-b border-outline-variant/30 pb-2">
+                <p className="label-md text-secondary uppercase tracking-wider">{item.label}</p>
+                <p className="headline-sm text-primary mt-2">{item.value || "—"}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Subscription Management Section */}
+        <div className="bg-surface-container-lowest border border-surface-variant shadow-elevation-1 p-8">
+          <h2 className="display-sm text-primary mb-6 border-b border-surface-variant pb-4 flex items-center gap-3">
+            <FiZap className="text-primary" /> Subscription
+          </h2>
+
+          {store?.plan === "PREMIUM" ? (
+            <div className="flex flex-col gap-6">
+              {/* Active Premium banner */}
+              <div className="flex items-start gap-6 p-6 bg-primary/5 border border-primary">
+                <span className="text-3xl text-primary"><FiStar /></span>
+                <div className="flex-1">
+                  <p className="headline-md text-primary">Premium Plan Active</p>
+                  <p className="body-md text-secondary mt-1">2% commission · Priority support · Advanced analytics</p>
+                  {subscription?.currentPeriodEnd && (
+                    <p className="body-md text-secondary mt-2 flex items-center gap-2">
+                      <FiCalendar />
+                      {subscription.cancelAtPeriodEnd
+                        ? `Cancels on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+                        : `Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Cancel option */}
+              {!subscription?.cancelAtPeriodEnd && (
+                <div className="flex items-center justify-between p-4 border border-outline-variant bg-surface">
+                  <div>
+                    <p className="label-md text-secondary uppercase tracking-wider">Cancel subscription</p>
+                    <p className="body-md text-secondary mt-1">Your plan stays active until the end of the billing period.</p>
+                  </div>
+                  <button
+                    onClick={handleCancelSubscription}
+                    disabled={cancellingSubscription}
+                    className="px-6 py-3 label-md border border-error text-error hover:bg-error hover:text-white transition-colors disabled:opacity-60 flex items-center gap-2"
+                  >
+                    {cancellingSubscription ? (
+                      <><div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> Cancelling...</>
+                    ) : "Cancel Plan"}
+                  </button>
+                </div>
+              )}
+              {subscription?.cancelAtPeriodEnd && (
+                <div className="flex items-center gap-3 p-4 border border-amber-300 bg-amber-50">
+                  <FiAlertTriangle className="text-amber-600 flex-shrink-0" />
+                  <p className="body-md text-amber-800">
+                    Your Premium plan is set to cancel at the end of the billing period.
+                    After that your store will be downgraded to the Free plan.
+                  </p>
+                </div>
+              )}
             </div>
-          ))}
+          ) : (
+            <div className="flex flex-col gap-6">
+              {/* Free Plan + Upgrade CTA */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {[
+                  { name: "Free Plan", commission: "5% commission", fee: "No monthly fee", analytics: "Basic analytics", support: "Standard support", color: "border-outline-variant", current: true },
+                  { name: "Premium Plan", commission: "2% commission", fee: "$29 / month", analytics: "Advanced analytics", support: "Priority support", color: "border-primary bg-primary/5", highlight: true },
+                ].map((plan) => (
+                  <div key={plan.name} className={`border p-6 shadow-elevation-1 ${plan.color}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="headline-sm text-primary">{plan.name}</p>
+                      {plan.current && <span className="label-sm px-2 py-0.5 bg-surface-variant text-secondary border border-outline-variant">Current</span>}
+                    </div>
+                    {[plan.commission, plan.fee, plan.analytics, plan.support].map((f) => (
+                      <p key={f} className="body-md text-secondary flex items-center gap-2 mb-2">
+                        <FiCheck className={plan.highlight ? "text-primary" : "text-secondary"} /> {f}
+                      </p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowSubscriptionModal(true)}
+                className="btn-primary px-8 py-4 label-md self-start flex items-center gap-2"
+              >
+                <FiZap /> Upgrade to Premium
+              </button>
+            </div>
+          )}
         </div>
       </div>
     ),
@@ -1457,25 +2042,7 @@ export default function StoreDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-on-background font-body-md antialiased pt-24 pb-16">
-      {/* Top bar using a style similar to Navbar.jsx */}
-      <header className="fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md bg-background/80 border-b border-surface-variant">
-        <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
-          <button
-            onClick={() => navigate("/")}
-            className="font-display font-bold text-3xl text-primary tracking-tight"
-          >
-            The<span className="italic text-secondary font-medium ml-2">Inkwell.</span>
-          </button>
-          <div className="flex items-center gap-4">
-            <span className="body-md text-secondary hidden sm:block">{user?.email}</span>
-            <img
-              src={`https://i.pravatar.cc/40?u=${user?.email}`}
-              className="w-10 h-10 rounded-full border border-outline-variant"
-              alt=""
-            />
-          </div>
-        </div>
-      </header>
+      <Navbar mode="dashboard" badgeText="Store" />
 
       <div className="max-w-7xl mx-auto px-8 py-8 flex flex-col lg:flex-row gap-12 w-full">
         {/* Sidebar */}
@@ -1493,6 +2060,14 @@ export default function StoreDashboard() {
           {TABS[activeTab]}
         </main>
       </div>
+
+      {/* Premium Subscription Modal */}
+      {showSubscriptionModal && (
+        <PremiumSubscriptionModal
+          onClose={() => setShowSubscriptionModal(false)}
+          onSubscribed={handleSubscribed}
+        />
+      )}
     </div>
   );
 }

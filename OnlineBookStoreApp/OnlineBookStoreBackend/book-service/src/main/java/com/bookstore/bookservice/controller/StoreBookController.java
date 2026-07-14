@@ -130,6 +130,20 @@ public class StoreBookController {
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
+    @GetMapping("/branch/{branchId}/count")
+    @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('WORKER')")
+    public ResponseEntity<ApiResponse<Long>> getBranchBooksCount(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID branchId){
+
+        if (extractRole(jwt).equals("WORKER")) branchId = UUID.fromString(jwt.getClaim("branch_id"));
+
+        long response = bookService.getBranchBooksCount(branchId);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
+
+    }
+
     @GetMapping("/my-store")
     @PreAuthorize("hasRole('STORE_ADMIN')")
     public ResponseEntity<ApiResponse<List<BookResponse>>> getStoreBooks(@AuthenticationPrincipal Jwt jwt){

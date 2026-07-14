@@ -12,6 +12,8 @@ import java.util.UUID;
 public interface StoreRepository extends JpaRepository<Store, UUID> {
     Optional<Store> findByEmail(String email);
 
+    Optional<Store> findByStripeAccountId(String stripeAccountId);
+
     List<Store> findByVerificationStatus(Store.VerificationStatus status);
 
     boolean existsByEmail(String email);

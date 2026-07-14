@@ -36,4 +36,14 @@ public class StoreEventPublisher {
                 });
     }
 
+    public void publishCompleteProfileEmail(CompleteProfileEmailEvent event) {
+        kafkaTemplate.send(KafkaTopics.COMPLETE_PROFILE_EMAIL, event.getToEmail(), event)
+                .whenComplete((result, ex) -> {
+                    if (ex != null)
+                        log.error("Failed to publish CompleteProfileEmailEvent for toEmail: {}", event.getToEmail(), ex);
+                    else
+                        log.info("Published CompleteProfileEmailEvent for toEmail: {}", event.getToEmail());
+                });
+    }
+
 }

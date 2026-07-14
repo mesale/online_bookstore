@@ -1,9 +1,9 @@
 package com.bookstore.storeservice.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class StoreDto {
@@ -37,6 +37,13 @@ public class StoreDto {
             String reason
     ) {}
 
+    public record DocumentResponse(
+            UUID id,
+            String type,
+            String fileName,
+            String url
+    ) {}
+
     public record StoreResponse(
             UUID id,
             String storeName,
@@ -52,7 +59,8 @@ public class StoreDto {
             String plan,
             String verificationStatus,
             String rejectionReason,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            List<DocumentResponse> documents
     ) {}
 
     public record StoreSummaryResponse(

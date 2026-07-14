@@ -276,9 +276,9 @@ export default function SearchResultsPage() {
 
             {/* Grid */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg h-36 animate-pulse" />
+                  <div key={i} className="aspect-[2/3] bg-surface-variant rounded-xl shadow-elevation-1 animate-pulse" />
                 ))}
               </div>
             ) : results.length === 0 ? (
@@ -294,7 +294,7 @@ export default function SearchResultsPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
                 {results.map((book) => (
                   <BookCard key={book.id} book={book} />
                 ))}

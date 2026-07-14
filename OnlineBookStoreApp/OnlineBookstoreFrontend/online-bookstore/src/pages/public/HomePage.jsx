@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import HeroCarousel from "../../components/HeroCarousel";
 import BookCard from "../../components/BookCard";
 import api from "../../api/axiosInstance";
-import { getBookImageUrl, getBooksFromResponse } from "../../utils/book";
+import { getBooksFromResponse } from "../../utils/book";
 import { FiBook } from "react-icons/fi";
 
 const GENRES = ["All Genres", "Business", "Science", "Fiction", "Philosophy", "Biography"];
@@ -40,10 +39,6 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-on-background font-body-md antialiased pt-24 overflow-x-hidden">
       <Navbar />
 
-      {/* Hero Carousel */}
-      <section className="max-w-7xl mx-auto px-8 w-full">
-        <HeroCarousel />
-      </section>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-8 py-16 w-full">
@@ -76,7 +71,7 @@ export default function HomePage() {
 
           {/* Book Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="aspect-[2/3] bg-surface-variant rounded-xl shadow-elevation-1 animate-pulse" />
               ))}
@@ -87,7 +82,7 @@ export default function HomePage() {
               <p className="body-lg">No books found in this genre yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
               {filteredBooks.map((book) => (
                 <BookCard key={book.id} book={book} />
               ))}

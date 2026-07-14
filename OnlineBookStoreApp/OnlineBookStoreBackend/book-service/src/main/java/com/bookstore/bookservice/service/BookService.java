@@ -325,6 +325,10 @@ public class BookService {
                 .toList();
     }
 
+    public long getBranchBooksCount(UUID branchId){
+        return bookRepository.countByBranchId(branchId);
+    }
+
     public Page<BookResponse> getUnapprovedBooksForStore(Pageable pageable){
 
         return bookRepository

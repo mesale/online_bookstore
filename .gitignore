@@ -14,3 +14,4 @@ OnlineBookStoreApp/OnlineBookStoreBackend/store-service/src/main/resources/appli
 OnlineBookStoreApp/OnlineBookStoreBackend/user-service/src/main/resources/application.properties
 q
 OnlineBookStoreApp/OnlineBookstoreFrontend/online-bookstore/.env
+OnlineBookStoreApp/OnlineBookStoreBackend/.env.example

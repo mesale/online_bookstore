@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -53,9 +54,33 @@ public class StoreController {
     }
 
     @GetMapping("/public/{storeId}")
-    public ResponseEntity<ApiResponse<StoreSummaryResponse>> geetStoreById(@PathVariable UUID storeId){
+    public ResponseEntity<ApiResponse<StoreSummaryResponse>> getStoreById(@PathVariable UUID storeId){
 
         return ResponseEntity.ok(ApiResponse.ok(storeService.getStore(storeId)));
+
+    }
+
+    @GetMapping("/{storeId}/email")
+    public ResponseEntity<ApiResponse<String>> getStoreEmail(@PathVariable UUID storeId){
+
+        return ResponseEntity.ok(ApiResponse.ok(storeService.getStore(storeId).email()));
+
+    }
+
+    @GetMapping("/{storeId}/plan")
+    @PreAuthorize("hasRole('STORE_ADMIN') or hasRole('EMPLOYEE') or hasRole('USER')")
+    public ResponseEntity<ApiResponse<String>> getStorePlan(@PathVariable UUID storeId){
+
+        return ResponseEntity.ok(ApiResponse.ok(storeService.getStorePlan(storeId)));
+
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<List<StoreSummaryResponse>>> getStores(){
+
+        List<StoreSummaryResponse> response = storeService.getStores();
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
 
     }
 
@@ -67,6 +92,18 @@ public class StoreController {
         String stripeAccountId = storeService.getStripeAccountId(storeId);
 
         return ResponseEntity.ok(ApiResponse.ok(stripeAccountId));
+    }
+
+    @GetMapping("/onboarding-status")
+    @PreAuthorize("hasRole('STORE_ADMIN')")
+    public ResponseEntity<ApiResponse<Boolean>> getOnboardingStatus(@AuthenticationPrincipal Jwt jwt){
+
+        UUID storeId = UUID.fromString(jwt.getClaim("store_id"));
+
+        boolean response = storeService.getOnboardingStatus(storeId);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
+
     }
 
     @PutMapping("/me")

@@ -69,6 +69,14 @@ public class BranchService {
         return toBranchResponse(branch);
     }
 
+    public List<BranchResponse> getStoreBranches(UUID storeId){
+
+        return branchRepository.findByStoreId(storeId)
+                .stream().map(this::toBranchResponse)
+                .toList();
+
+    }
+
     public boolean branchExists(UUID branchId, UUID storeId){
         return branchRepository.existsByIdAndStoreId(branchId, storeId);
     }

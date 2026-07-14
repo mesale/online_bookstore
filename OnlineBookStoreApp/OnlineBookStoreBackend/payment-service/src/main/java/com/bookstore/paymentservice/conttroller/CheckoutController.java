@@ -37,4 +37,15 @@ public class CheckoutController {
 
     }
 
+    @PostMapping("/refund/{orderId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<RefundResponse>> requestRefund(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID orderId
+    ) {
+        RefundResponse response = paymentService.requestRefund(orderId, jwt.getSubject());
+        return ResponseEntity.ok(ApiResponse.ok("Refund issued successfully", response));
+    }
+
 }
+

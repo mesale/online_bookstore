@@ -33,11 +33,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final StoreOwnerRepository storeOwnerRepository;
     private final EmployeeRepository employeeRepository;
+    private final com.bookstore.userservice.repository.EmployeeInvitationRepository employeeInvitationRepository;
     private final StoreClient storeClient;
     private final Keycloak keycloak;
+    private final com.bookstore.userservice.event.UserEventPublisher userEventPublisher;
 
     @Value("${keycloak.realm}")
     private String realm;
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     public UserResponse registerUser(RegisterUserRequest request) {
 
@@ -100,6 +105,19 @@ public class UserService {
         user.setPhone(request.phone());
 
         return touserResponse(userRepository.save(user));
+    }
+
+    public void forgotPassword(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
+
+        try {
+            keycloak.realm(realm).users().get(user.getKeycloakId()).executeActionsEmail(List.of("UPDATE_PASSWORD"));
+            log.info("Password reset email sent to: {}", email);
+        } catch (Exception e) {
+            log.error("Failed to send reset password email", e);
+            throw new KeycloakException("Failed to send reset password email");
+        }
     }
 
     @Transactional
@@ -176,28 +194,80 @@ public class UserService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        if (employeeRepository.existsByUserId(user.getId())) {
+             throw new ConflictException("User is already an employee");
+        }
+        
+        Optional<com.bookstore.userservice.entity.EmployeeInvitation> existingInvite = 
+                employeeInvitationRepository.findByUserIdAndStoreIdAndStatus(user.getId(), storeId, "PENDING");
+        if (existingInvite.isPresent()) {
+             throw new ConflictException("User already has a pending invitation to this store");
+        }
+
+        String token = UUID.randomUUID().toString();
+        com.bookstore.userservice.entity.EmployeeInvitation invitation = com.bookstore.userservice.entity.EmployeeInvitation.builder()
+                .storeId(storeId)
+                .branchId(branchId)
+                .userId(user.getId())
+                .role(request.role().name())
+                .token(token)
+                .status("PENDING")
+                .expiresAt(java.time.LocalDateTime.now().plusDays(7))
+                .build();
+
+        employeeInvitationRepository.save(invitation);
+
+        com.bookstore.userservice.event.EmployeeInvitationEmailEvent emailEvent = com.bookstore.userservice.event.EmployeeInvitationEmailEvent.builder()
+                .invitationId(invitation.getId())
+                .toEmail(user.getEmail())
+                .userName(user.getName())
+                .token(token)
+                .frontendUrl(frontendUrl)
+                .build();
+
+        userEventPublisher.publishEmployeeInvitationEmail(emailEvent);
+
+        return touserResponse(user);
+    }
+
+    @Transactional
+    public UserResponse confirmEmployeeInvitation(String token) {
+        com.bookstore.userservice.entity.EmployeeInvitation invitation = employeeInvitationRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invitation not found or invalid"));
+
+        if (!invitation.getStatus().equals("PENDING")) {
+            throw new ConflictException("Invitation is no longer pending");
+        }
+
+        if (invitation.getExpiresAt().isBefore(java.time.LocalDateTime.now())) {
+            invitation.setStatus("EXPIRED");
+            employeeInvitationRepository.save(invitation);
+            throw new ConflictException("Invitation has expired");
+        }
+
+        User user = userRepository.findById(invitation.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Employee employee = Employee.builder()
                 .userId(user.getId())
-                .branchId(branchId)
-                .role(request.role())
+                .branchId(invitation.getBranchId())
+                .role(Employee.Role.valueOf(invitation.getRole()))
                 .build();
 
         UserRepresentation updatedEmployee = keycloak.realm(realm).users().get(user.getKeycloakId()).toRepresentation();
         Map<String, List<String>> attributes = updatedEmployee.getAttributes();
         if (attributes == null) attributes = new HashMap<>();
 
-        attributes.put("store_id", List.of(storeId.toString()));
-        attributes.put("branch_id", List.of((branchId.toString())));
+        attributes.put("store_id", List.of(invitation.getStoreId().toString()));
+        attributes.put("branch_id", List.of((invitation.getBranchId().toString())));
         updatedEmployee.setAttributes(attributes);
 
         keycloak.realm(realm).users().get(user.getKeycloakId()).update(updatedEmployee);
 
         try {
-
             RoleRepresentation storeAdmin = keycloak.realm(realm)
                     .roles()
-                    .get("ROLE_" + request.role())
+                    .get("ROLE_" + invitation.getRole())
                     .toRepresentation();
 
             keycloak.realm(realm).users()
@@ -205,14 +275,28 @@ public class UserService {
                     .roles().realmLevel()
                     .add(Collections.singletonList(storeAdmin));
 
-
         } catch(Exception ex){
-            log.warn("Could not assign ROLE_" + request.role() +" to keycloakId: {}. " +
+            log.warn("Could not assign ROLE_" + invitation.getRole() +" to keycloakId: {}. " +
                     "Role may already be assigned.", user.getKeycloakId());
         }
+        
         employeeRepository.save(employee);
+        
+        invitation.setStatus("ACCEPTED");
+        employeeInvitationRepository.save(invitation);
 
         return touserResponse(user);
+    }
+    
+    public com.bookstore.userservice.dto.EmployeeInvitationResponse getInvitationDetails(String token) {
+        com.bookstore.userservice.entity.EmployeeInvitation invitation = employeeInvitationRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invitation not found"));
+        return new com.bookstore.userservice.dto.EmployeeInvitationResponse(
+                invitation.getStoreId(),
+                invitation.getBranchId(),
+                invitation.getRole(),
+                invitation.getStatus()
+        );
     }
 
     public List<UserResponse> getEmployees(UUID branchId){

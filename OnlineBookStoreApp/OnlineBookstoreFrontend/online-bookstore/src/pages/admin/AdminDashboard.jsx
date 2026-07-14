@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
+import Navbar from "../../components/Navbar";
 import api from "../../api/axiosInstance";
 import { unwrapList } from "../../utils/apiHelpers";
 import {
   FiPieChart, FiClock, FiFileText, FiClipboard, FiEdit3, FiCreditCard,
-  FiShield, FiLogOut, FiHome, FiFile
+  FiShield, FiLogOut, FiHome, FiFile, FiX, FiEye, FiCheckCircle,
+  FiChevronLeft, FiChevronRight
 } from "react-icons/fi";
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 function AdminSidebar({ activeTab, setActiveTab }) {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const NAV = [
     { id: "overview", icon: <FiPieChart />, label: "Overview" },
     { id: "pending", icon: <FiClock />, label: "Pending Stores" },
@@ -77,6 +78,146 @@ function StatCard({ icon, label, value, sub }) {
   );
 }
 
+// ─── Document Viewer Modal ────────────────────────────────────────────────────
+function DocumentViewerModal({ documents, initialIndex = 0, onClose }) {
+  const [idx, setIdx] = useState(initialIndex);
+  const doc = documents[idx];
+
+  const isImage = (url) => /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(url);
+  const isPdf = (url) => /\.pdf$/i.test(url) || url?.includes("/pdf");
+
+  const prev = () => setIdx((i) => Math.max(0, i - 1));
+  const next = () => setIdx((i) => Math.min(documents.length - 1, i + 1));
+
+  // Close on backdrop click
+  const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={handleBackdrop}
+    >
+      <div className="bg-background border border-surface-variant shadow-elevation-3 w-full max-w-3xl flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-variant flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <FiFile className="text-primary text-xl" />
+            <div>
+              <p className="headline-sm text-primary">{doc?.type || `Document ${idx + 1}`}</p>
+              <p className="body-md text-secondary">{idx + 1} of {documents.length}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 flex items-center justify-center border border-outline-variant text-secondary hover:border-primary hover:text-primary transition-colors"
+          >
+            <FiX />
+          </button>
+        </div>
+
+        {/* Preview area */}
+        <div className="flex-1 overflow-auto bg-surface flex items-center justify-center min-h-64">
+          {doc?.url ? (
+            isImage(doc.url) ? (
+              <img
+                src={doc.url}
+                alt={doc.type || "document"}
+                className="max-w-full max-h-[60vh] object-contain p-4"
+              />
+            ) : isPdf(doc.url) ? (
+              <iframe
+                src={doc.url}
+                title={doc.type || "PDF Document"}
+                className="w-full h-[60vh] border-0"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-6 p-12 text-center">
+                <FiFile className="text-6xl text-secondary opacity-60" />
+                <p className="body-lg text-secondary">Preview unavailable for this file type.</p>
+                <a
+                  href={doc.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-primary px-8 py-3 label-md inline-flex items-center gap-2"
+                >
+                  <FiEye /> Open in New Tab
+                </a>
+              </div>
+            )
+          ) : (
+            <p className="body-md text-secondary p-8">No URL available for this document.</p>
+          )}
+        </div>
+
+        {/* Footer nav */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-surface-variant flex-shrink-0">
+          <button
+            onClick={prev}
+            disabled={idx === 0}
+            className="flex items-center gap-2 px-4 py-2 label-md border border-outline-variant text-secondary hover:border-primary hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <FiChevronLeft /> Previous
+          </button>
+          <div className="flex gap-2">
+            {documents.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIdx(i)}
+                className={`w-2.5 h-2.5 rounded-full border transition-colors ${
+                  i === idx ? "bg-primary border-primary" : "bg-surface-variant border-outline-variant hover:border-primary"
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={next}
+            disabled={idx === documents.length - 1}
+            className="flex items-center gap-2 px-4 py-2 label-md border border-outline-variant text-secondary hover:border-primary hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Next <FiChevronRight />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Approve Confirm Modal ─────────────────────────────────────────────────────
+function ApproveConfirmModal({ store, onConfirm, onCancel, loading }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+      <div className="bg-background border border-surface-variant shadow-elevation-3 p-8 w-full max-w-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <FiCheckCircle className="text-primary text-2xl flex-shrink-0" />
+          <h3 className="headline-md text-primary">Approve Store</h3>
+        </div>
+        <p className="body-md text-secondary mb-2">
+          You are about to approve <span className="font-bold text-primary">{store?.storeName}</span>.
+        </p>
+        <p className="body-md text-secondary mb-8">
+          This will grant them full platform access and trigger Stripe onboarding. This action cannot be undone.
+        </p>
+        <div className="flex gap-4">
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            className="flex-1 btn-secondary py-3 label-md hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 btn-primary py-3 label-md disabled:opacity-60"
+          >
+            {loading ? "Approving..." : "Confirm Approval"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Reject Modal ─────────────────────────────────────────────────────────────
 function RejectModal({ type, onClose, onConfirm }) {
   const [reason, setReason] = useState("");
@@ -127,6 +268,11 @@ function RejectModal({ type, onClose, onConfirm }) {
 // ─── Store Card (reused across tabs) ─────────────────────────────────────────
 function StoreCard({ store, onApprove, onReject, showApprove = true, actionLoading = null }) {
   const isActionLoading = actionLoading === store.id;
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [approveConfirmOpen, setApproveConfirmOpen] = useState(false);
+
+  const openViewer = (i = 0) => { setViewerIndex(i); setViewerOpen(true); };
 
   return (
     <div className="bg-surface-container-lowest border border-surface-variant shadow-elevation-1 p-8 flex flex-col gap-8 group hover:border-primary transition-colors">
@@ -167,31 +313,42 @@ function StoreCard({ store, onApprove, onReject, showApprove = true, actionLoadi
         ) : null)}
       </div>
 
-      {store.documents?.length > 0 && (
+      {/* Documents section */}
+      {store.documents?.length > 0 ? (
         <div className="border-t border-surface-variant pt-6">
-          <p className="label-md text-secondary uppercase tracking-wider mb-4">
-            Verification Documents ({store.documents.length})
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="label-md text-secondary uppercase tracking-wider">
+              Verification Documents ({store.documents.length})
+            </p>
+            <button
+              onClick={() => openViewer(0)}
+              className="flex items-center gap-2 px-4 py-2 label-md border border-primary text-primary hover:bg-primary hover:text-on-primary transition-colors"
+            >
+              <FiEye /> View All
+            </button>
+          </div>
           <div className="flex flex-wrap gap-3">
             {store.documents.map((doc, i) => (
-              <a
+              <button
                 key={i}
-                href={doc.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 bg-surface border border-outline-variant px-4 py-2 text-primary hover:border-primary transition-all label-md"
+                onClick={() => openViewer(i)}
+                className="flex items-center gap-2 bg-surface border border-outline-variant px-4 py-2 text-primary hover:border-primary hover:bg-primary/5 transition-all label-md"
               >
-                <span className="flex items-center gap-2"><FiFile /> {doc.type || `Doc ${i + 1}`}</span>
-              </a>
+                <FiFile /> {doc.type || `Doc ${i + 1}`}
+              </button>
             ))}
           </div>
+        </div>
+      ) : showApprove && (
+        <div className="border-t border-surface-variant pt-4">
+          <p className="body-md text-secondary italic">No documents uploaded yet.</p>
         </div>
       )}
 
       {showApprove && (
         <div className="flex gap-4 pt-6 border-t border-surface-variant mt-auto">
           <button
-            onClick={() => onApprove(store)}
+            onClick={() => setApproveConfirmOpen(true)}
             disabled={isActionLoading}
             className="flex-1 btn-primary py-3 label-md disabled:opacity-60"
           >
@@ -205,12 +362,34 @@ function StoreCard({ store, onApprove, onReject, showApprove = true, actionLoadi
           </button>
         </div>
       )}
+
+      {/* Document viewer modal */}
+      {viewerOpen && store.documents?.length > 0 && (
+        <DocumentViewerModal
+          documents={store.documents}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerOpen(false)}
+        />
+      )}
+
+      {/* Approve confirmation modal */}
+      {approveConfirmOpen && (
+        <ApproveConfirmModal
+          store={store}
+          loading={isActionLoading}
+          onCancel={() => setApproveConfirmOpen(false)}
+          onConfirm={() => {
+            setApproveConfirmOpen(false);
+            onApprove(store);
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // ─── Application Card ─────────────────────────────────────────────────────────
-function ApplicationCard({ app, onApprove }) {
+function ApplicationCard({ app, onApprove, onReject }) {
   const [loading, setLoading] = useState(false);
 
   const handleApprove = async () => {
@@ -223,7 +402,7 @@ function ApplicationCard({ app, onApprove }) {
     <div className="bg-surface-container-lowest border border-surface-variant shadow-elevation-1 p-8 flex flex-col gap-6">
       <div className="flex items-start justify-between">
         <div>
-          <h4 className="headline-sm text-primary">{app.storeName}</h4>
+          <h4 className="headline-sm text-primary font-bold">{app.storeName || "Unnamed Store"}</h4>
           <p className="body-md text-secondary mt-1">{app.businessEmail}</p>
         </div>
         <span className="label-md px-3 py-1 border border-outline-variant bg-surface text-secondary uppercase tracking-widest">
@@ -236,6 +415,7 @@ function ApplicationCard({ app, onApprove }) {
           { label: "Phone", value: app.phone },
           { label: "City", value: app.city },
           { label: "Address", value: app.address },
+          { label: "Applicant", value: app.applicantName ? `${app.applicantName} (${app.applicantEmail})` : null },
         ].map((item) => item.value ? (
           <div key={item.label}>
             <p className="label-md text-secondary uppercase tracking-wider">{item.label}</p>
@@ -252,13 +432,19 @@ function ApplicationCard({ app, onApprove }) {
         </div>
       )}
 
-      <div className="pt-2 border-t border-surface-variant">
+      <div className="flex gap-4 pt-6 border-t border-surface-variant mt-auto">
         <button
           onClick={handleApprove}
           disabled={loading}
-          className="w-full btn-primary py-4 label-md disabled:opacity-60"
+          className="flex-1 btn-primary py-3 label-md disabled:opacity-60"
         >
-          {loading ? "Approving..." : "Approve → Send Registration Link"}
+          {loading ? "Approving..." : "Approve"}
+        </button>
+        <button
+          onClick={() => onReject(app)}
+          className="flex-1 btn-secondary py-3 text-error border-error/30 hover:bg-error/5 transition-colors label-md"
+        >
+          Reject
         </button>
       </div>
     </div>
@@ -350,6 +536,7 @@ function StoreListTab({ endpoint, emptyLabel, emptyIcon, showApprove = true }) {
 function ApplicationsTab() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [rejectTarget, setRejectTarget] = useState(null);
 
   useEffect(() => {
     // Fetch store applications from user service
@@ -365,6 +552,20 @@ function ApplicationsTab() {
       setApplications((prev) => prev.filter((a) => a.id !== app.id));
     } catch (err) {
       console.error("Failed to approve store application", err);
+    }
+  };
+
+  const handleReject = async (reason) => {
+    const app = rejectTarget;
+    try {
+      await api.put(`/users/admin/store-applications/${app.id}/reject`, null, {
+        params: { reason }
+      });
+      setApplications((prev) => prev.filter((a) => a.id !== app.id));
+    } catch (err) {
+      console.error("Failed to reject store application", err);
+    } finally {
+      setRejectTarget(null);
     }
   };
 
@@ -389,10 +590,24 @@ function ApplicationsTab() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-top-4 duration-500 grid grid-cols-1 md:grid-cols-2 gap-6">
-      {applications.map((app) => (
-        <ApplicationCard key={app.id} app={app} onApprove={handleApprove} />
-      ))}
+    <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {applications.map((app) => (
+          <ApplicationCard
+            key={app.id}
+            app={app}
+            onApprove={handleApprove}
+            onReject={setRejectTarget}
+          />
+        ))}
+      </div>
+      {rejectTarget && (
+        <RejectModal
+          type="Application"
+          onClose={() => setRejectTarget(null)}
+          onConfirm={handleReject}
+        />
+      )}
     </div>
   );
 }
@@ -469,8 +684,6 @@ function TransactionsTab() {
 
 // ─── Main Admin Dashboard ─────────────────────────────────────────────────────
 export default function AdminDashboard() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [counts, setCounts] = useState({
     pending: 0, awaitingDocs: 0, docsSubmitted: 0, applications: 0,
@@ -559,28 +772,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-on-background font-body-md antialiased pt-24 pb-16">
-      {/* Top bar using a style similar to Navbar.jsx */}
-      <header className="fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-md bg-background/80 border-b border-surface-variant">
-        <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
-          <button
-            onClick={() => navigate("/")}
-            className="font-display font-bold text-3xl text-primary tracking-tight"
-          >
-            The<span className="italic text-secondary font-medium ml-2">Inkwell.</span>
-            <span className="ml-4 text-[10px] uppercase tracking-[0.2em] font-sans font-bold bg-primary text-on-primary px-3 py-1">
-              Admin
-            </span>
-          </button>
-          <div className="flex items-center gap-4">
-            <span className="body-md text-secondary hidden sm:block">{user?.email}</span>
-            <img
-              src={`https://i.pravatar.cc/40?u=${user?.email}`}
-              className="w-10 h-10 rounded-full border border-outline-variant"
-              alt=""
-            />
-          </div>
-        </div>
-      </header>
+      <Navbar mode="dashboard" badgeText="Admin" />
 
       <div className="max-w-7xl mx-auto px-8 py-8 flex flex-col lg:flex-row gap-12 w-full">
         {/* Sidebar */}

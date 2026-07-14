@@ -45,6 +45,9 @@ public class Store {
     @Column(name = "stripe_account_id")
     private String stripeAccountId;
 
+    @Column(name = "onboarding_completed")
+    private boolean onboardingComplete;
+
     @Column(nullable = false)
     private String region;
 

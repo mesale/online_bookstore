@@ -29,6 +29,21 @@ public class StoreApplication {
     @Column(name = "business_email", nullable = false)
     private String businessEmail;
 
+    @Column(name = "store_name")
+    private String storeName;
+
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "description")
+    private String description;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.PENDING;

@@ -13,6 +13,9 @@ import java.util.UUID;
 public interface StoreClient {
 
     @GetMapping("/api/stores/{storeId}/stripe-account")
-    public ResponseEntity<ApiResponse<String>> getStripeAccountId(@PathVariable UUID storeId);
+    ResponseEntity<ApiResponse<String>> getStripeAccountId(@PathVariable UUID storeId);
+
+    @GetMapping("/api/stores/{storeId}/plan")
+    ResponseEntity<ApiResponse<String>> getStorePlan(@PathVariable UUID storeId);
 
 }

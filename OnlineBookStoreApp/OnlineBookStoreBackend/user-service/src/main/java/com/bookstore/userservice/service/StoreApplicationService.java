@@ -17,7 +17,9 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import com.bookstore.userservice.event.StoreApplicationEmailEvent;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -33,7 +35,6 @@ public class StoreApplicationService {
     private final UserRepository userRepository;
     private final UserEventPublisher userEventPublisher;
     private final Keycloak keycloak;
-    private final EmailService emailService;
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -60,7 +61,13 @@ public class StoreApplicationService {
         tokenRepository.save(appToken);
         log.info("Token saved: {}", token);
 
-        emailService.sendStoreApplicationEmail(businessEmail, user.getName(), token.toString());
+        StoreApplicationEmailEvent event = StoreApplicationEmailEvent.builder()
+                .toEmail(businessEmail)
+                .applicantName(user.getName())
+                .token(token.toString())
+                .build();
+        
+        userEventPublisher.publishStoreApplicationEmail(event);
         log.info("Email sent successfully");
 
     }
@@ -104,6 +111,11 @@ public class StoreApplicationService {
         StoreApplication storeApplication =StoreApplication.builder()
                 .user(user)
                 .businessEmail(request.businessEmail())
+                .storeName(request.storeName())
+                .phone(request.phone())
+                .address(request.address())
+                .city(request.city())
+                .description(request.description())
                 .status(StoreApplication.Status.PENDING)
                 .build();
 
@@ -166,6 +178,10 @@ public class StoreApplicationService {
                 .ownerEmail(application.getUser().getEmail())
                 .ownerPhone(application.getUser().getPhone())
                 .businessEmail(application.getBusinessEmail())
+                .storeName(application.getStoreName())
+                .phone(application.getPhone())
+                .address(application.getAddress())
+                .city(application.getCity())
                 .build();
 
         userEventPublisher.publishStoreApplicationApproved(event);
@@ -196,6 +212,13 @@ public class StoreApplicationService {
                 storeApplication.getId(),
                 storeApplication.getUser().getId(),
                 storeApplication.getBusinessEmail(),
+                storeApplication.getStoreName(),
+                storeApplication.getPhone(),
+                storeApplication.getAddress(),
+                storeApplication.getCity(),
+                storeApplication.getDescription(),
+                storeApplication.getUser() != null ? storeApplication.getUser().getName() : null,
+                storeApplication.getUser() != null ? storeApplication.getUser().getEmail() : null,
                 storeApplication.getStatus(),
                 storeApplication.getRejectionReason(),
                 storeApplication.getSubmittedAt(),
