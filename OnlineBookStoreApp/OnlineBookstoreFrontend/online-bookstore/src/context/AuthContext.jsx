@@ -10,8 +10,6 @@ function initKeycloak() {
   if (!keycloakInitPromise) {
     keycloakInitPromise = keycloak.init({
       onLoad: "check-sso",
-      silentCheckSsoRedirectUri:
-        window.location.origin + "/silent-check-sso.html",
       pkceMethod: "S256",
       checkLoginIframe: false,
     });
